@@ -19,17 +19,15 @@ int main(int argc, char* argv[]) {
 		printf("You must pass 1 argument to the program\n");
 	}
 
+	printf("---- START OF MAIN ----\n");
+
 	Node* root = create_tree(argv[1]);
 
-	/*
-	Node* root = create_node(SCOPE);
-	root->left = create_node(VAR);
-	root->right = create_node(VAR);
-	*/
-
+	printf("--- START OF TREEPRINT ---\n");
 	treeprint(root, 0);
+	printf("--- END OF TREEPRINT ---\n");
 
-	printf("No errors\n");
+	printf("---- END OF MAIN ----\n");
 
 
 	return 0;
