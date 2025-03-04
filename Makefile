@@ -3,14 +3,17 @@ CC = gcc
 SOURCEDIR = "."
 SOURCES := $(shell find $(SOURCEDIR) -name '*.c')
 
+EXECUTABLE = "./logic"
+OBJECTS := main.o node.o solve.o
+
 %.o: %.c $(SOURCES)
 	$(CC) -c -o $@ $<
 
-build: main.o node.o solve.o
-	$(CC) -o logic main.o node.o solve.o
+build: $(OBJECTS)
+	$(CC) -o $(EXCUTABLE) $(OBJECTS)
 
-debug: main.o node.o
-	$(CC) -g3 -o logic main.o node.o
+debug: $(OBJECTS)
+	$(CC) -g3 -o $(EXCUTABLE) $(OBJECTS)
 
 test1: debug
 	# TEST 1
@@ -34,3 +37,7 @@ test: test1 test2 test3 test4
 
 
 default: build run
+
+
+clean:
+	rm $(EXCUTABLE) $(OBJECTS)

@@ -30,5 +30,7 @@ typedef struct Node {
  * @ret: returns the root of the tree */
 
 Node* create_tree(char* input_string);
+Node* create_node(Type type);
+bool compare_trees(Node* a, Node* b);
 
 #endif

@@ -1,7 +1,8 @@
 #include "solve.h"
 
 #include <assert.h>
-#include <bool.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 
 Node* copy_tree(Node* root){
@@ -60,17 +61,6 @@ void unpack_bthen(Node* root){
 	unpack_then(root->right);
 }
 
-typedef enum {
-	VAR,
-	NOT,
-	AND,
-	OR,
-	THEN,
-	BTHEN,
-	OPEN,
-	CLOSE
-} Type;
-
 void replace_parent_with_child(Node* parent, Node* child){
 	// the children of the parent are not preserved
 
@@ -96,113 +86,112 @@ void replace_parent_with_child(Node* parent, Node* child){
 }
 
 bool simple_reduce(Node* root){
-	// find p & p
-	// find p | p
-	// find p & !p
-	// find p | !p
-	//
-	// find !p & p
-	// find !p | p
-	// find !p & !p
-	// find !p | !p
+	bool left_not = left->type == NOT;
+	bool right_not = right->type == NOT;
 
-	Node* left = root->left;
-	Node* right = root->right;
-
-	bool left_var = left->type == VAR;
-	bool right_var = left->type == VAR;
-
-	bool left_not_var = left->type == NOT && left->left->type == VAR;
-	bool right_not_var = right->type == NOT && right->left->type == VAR;
-
-	if ((right_var && left_var && right->value == left->value) 
-			|| (right_not_var && left_not_var && right->left->value == left->left->value)){
-
-
-		// (p & p) or (!p & !p)
-		// (!p | !p) or (!p | !p)
-		replace_parent_with_child(root, left);
-		return true;
-	} else if ((right_not_var && left_var && right->left->value == left->value)
-			|| ){
-		// (p & !p) or (p | !p)
-
-		if (root->type == OR){
-			left->value = NULL;
-
-			// it's a TAUTOLOGY
-			left->type = OPEN;
-		} else if (root->type == AND){
-			left->value = NULL;
-
-			// it's a CONTRADICTION
-			left->type = CLOSE;
+	if (!right_not && !left_not && compare_trees(root->left, root->right)) {
+		// left: POSITIVE and right: POSITIVE
+		switch (root->type){
+		case AND:
+		case OR:
+			// The root and right should be deleted, and replaced with left
+			break;
+		case THEN:
+		case BTHEN:
+			// p -> p = !p|p = T
+			// p <-> p = (p -> p) & (p -> p) = (!p|p) & (!p|p)= T & T = T
+			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
+			break;
+		case CLOSE:
+		case VAR:
+		case NOT:
+		case OPEN:
+		default:
+			printf("ERROR Case this state should never happen\n");
+			assert(false);
+			break;
 		}
-
-		// TODO: The right->left has to be deleted
-		replace_parent_with_child(root, left);
-		return true;
-	} else if (left_not_var && right_var && right->value == left->left->value){
-		// (!p & p) or (!p | p)
-
-		if (root->type == OR){
-			right->value = NULL;
-
-			// it's a TAUTOLOGY
-			// BUG: IF the right had children it could make a bug
-			right->type = OPEN;
-		} else if (root->type == AND){
-			right->value = NULL;
-
-			// it's a CONTRADICTION
-			right->type = CLOSE;
+	} else if (right_not && left_not && compare_trees(root->left->left, root->right->left)) {
+		// left: NEGATIVE and right: NEGATIVE
+		switch (root->type){
+		case AND:
+		case OR:
+			// The root and right should be deleted, and replaced with left
+			break;
+		case THEN:
+		case BTHEN:
+			// !p -> !p = p|!p = T
+			// !p <-> !p = (!p -> !p) & (!p -> !p) = (p|!p) & (p|!p)= T & T = T
+			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
+			break;
+		case CLOSE:
+		case VAR:
+		case NOT:
+		case OPEN:
+		default:
+			printf("ERROR Case this state should never happen\n");
+			assert(false);
+			break;
 		}
-
-		// TODO: The left->left has to be deleted
-		replace_parent_with_child(root, right);
-		return true;
+	} else if (right_not && compare_trees(root->left, root->right->left)) {
+		// left: POSITIVE and right: NEGATIVE
+		switch (root->type){
+		case AND:
+			// p & !p = F
+			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
+			break;
+		case OR:
+			// p | !p = T
+			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
+			break;
+		case THEN:
+			// p -> !p = !p|!p = !p
+			// The root and right should be deleted, and replaced with RIGHT
+			break;
+		case BTHEN:
+			// p <-> !p = (p -> !p) & (!p -> p) = (!p|!p) & (p|p) = !p & p = F
+			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
+			break;
+		case CLOSE:
+		case VAR:
+		case NOT:
+		case OPEN:
+		default:
+			printf("ERROR Case this state should never happen\n");
+			assert(false);
+			break;
+		}
+	} else if (left_not && compare_trees(root->left->left, root->right)) {
+		// left: NEGATIVE and right: POSITIVE
+		switch (root->type){
+		case AND:
+			// !p & p = F
+			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
+			break;
+		case OR:
+			// !p | p = T
+			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
+			break;
+		case THEN:
+			// !p -> p = p|p = p
+			// The root and right should be deleted, and replaced with RIGHT
+			break;
+		case BTHEN:
+			// !p <-> p = (!p -> p) & (p -> !p) = (p|p) & (!p|!p)= p & !p = F
+			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
+			break;
+		case CLOSE:
+		case VAR:
+		case NOT:
+		case OPEN:
+		default:
+			printf("ERROR Case this state should never happen\n");
+			assert(false);
+			break;
+		}
 	}
-
-	/*if (left->type == VAR){
-		if (right->type == VAR && left->value == right->value){
-			replace_parent_with_child(root, left);
-		} else if (right->type == NOT && right->left->type == VAR && left->value == right->left->value){
-			replace_parent_with_child(root, left);
-			
-			if (root->type == OR){
-				left->value = NULL;
-
-				// it's a TAUTOLOGY
-				left->type = OPEN;
-			} else if (root->type == AND){
-				left->value = NULL;
-
-				// it's a CONTRADICTION
-				left->type = CLOSE;
-			}
-		}
-	} else if (left->type == NOT && left->left->type == VAR){
-		if (right->type == VAR && left->value == right->value){
-			replace_parent_with_child(root, left);
-
-			if (root->type == OR){
-				left->value = NULL;
-
-				// it's a TAUTOLOGY
-				left->type = OPEN;
-			} else if (root->type == AND){
-				left->value = NULL;
-
-				// it's a CONTRADICTION
-				left->type = CLOSE;
-			}
-		} else if (right->type == NOT && right->left->type == VAR && left->value == right->left->value){
-			replace_parent_with_child(root, left);
-		}
-	}*/
-
-	return false;
 }
+
 
 bool special_reduce(Node* root, Type nested_type){
 	// p & (p | q) = p | (p & q) = p
@@ -215,23 +204,31 @@ bool special_reduce(Node* root, Type nested_type){
 			&& (left->left->value == right->value || left->right->value == right->value)){
 			// replace root with right
 
+			printf("First case\n");
+
 			replace_parent_with_child(root, right);
 			return true;
 	}else if(right->type == nested_type && left->type == VAR
 			&& (right->left->value == left->value || right->right->value == left->value)){
 			// replace root with left
 
+			printf("Second case\n");
+
 			replace_parent_with_child(root, left);
 			return true;
 	}
+			
+	printf("Nothing happended case\n");
 
 	return false;
 }
 
 
 Node* reduce_tree(Node* root){
-	if (root == NULL || (root->left == NULL && root->right == NULL))
+	printf("REDUCE TREE: %p, type: %d, left: %p, right: %p\n", root, root->type, root->left, root->right);
+	if (root == NULL || (root->left == NULL && root->right == NULL)){
 		return NULL;
+	}
 
 	// paterns
 	
@@ -246,21 +243,20 @@ Node* reduce_tree(Node* root){
 			break;
 		case THEN:
 		case BTHEN:
-		case OPEN:
+			printf("THEN\n");
+			return NULL;
+			break;
 		case CLOSE:
-
 		case VAR:
+			printf("hello\n");
 			return NULL;
 		case NOT:
+		case OPEN:
 		default:
+			printf("DEFAULT\n");
 			reduce_tree(root->left);
 			break;
 	}
 	
-	if (root->type == OR 
-			&& (root->right->type == OR && root->left->type == AND)
-			&& (root->left->type == VAR && root)
-	
-
-	return NULL;
+	return root;
 }

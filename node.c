@@ -25,10 +25,33 @@ Node* create_node(Type type){
 	Node* node = &nodes[node_top++];
 	node->type = type;
 
-	node->value = NULL;
+	node->value = '\0';
 	node->left = node->right = NULL;
 
 	return node;
+}
+
+// Checks if the trees are identical
+// TODO: This need to work with "equivalent" trees
+// In the sense that the order is different
+//
+// That or I need to make a function that check if theirs an adjacent OR or AND that has that value
+bool compare_trees(Node* a, Node* b){
+	if (a == NULL && b == NULL)
+		return true;
+
+	if (a->type == b->type
+			&& a->left->type == b->left->type
+			&& a->right->type == b->right->type
+			&& a->left->value == b->left->value
+			&& a->right->value == b->right->value
+			){
+		bool left = compare_nodes(a->left, b->left);
+		bool right = compare_nodes(a->right, b->right);
+		return left && right;
+	}
+
+	return false;
 }
 
 // The pointers to the last open parenthasis
