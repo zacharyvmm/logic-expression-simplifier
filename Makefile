@@ -18,20 +18,20 @@ debug: $(OBJECTS)
 test1: debug
 	# TEST 1
 	#gdb -ex=r --args 
-	./logic "p ^ q"
+	./logic "p & q"
 
 test2: debug
 	# TEST 2
-	./logic "( p ^ q | r ) | p"
+	./logic "( p & q | r ) | p"
 	#gdb -ex=r --args ./logic "( p ^ q | r ) | p"
 
 test3: debug
 	# TEST 3
-	./logic "( ( p ^ q ) | p ) ~ ( ( p | q ) ^ p ) ~ p"
+	./logic "( ( p & q ) | p ) ~ ( ( p | q ) & p ) ~ p"
 
 test4: debug
 	# TEST 4
-	./logic "( ( - p ^ q ) | p ) ~ ( ( p | q ) ^ - p ) ~ p"
+	./logic "( ( ! p & q ) | p ) ~ ( ( p | q ) & ! p ) ~ p"
 
 test: test1 test2 test3 test4
 

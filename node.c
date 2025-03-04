@@ -201,11 +201,11 @@ Node* create_tree(char* input_string){
 	while (token != NULL){
 		switch (token[0]){
 			// NOT
-			case '-':
+			case '!':
 				current = add_to_tree(current, &state, NOT);
 				break;
 			// AND
-			case '^':
+			case '&':
 				current = add_to_tree(current, &state, AND);
 				break;
 

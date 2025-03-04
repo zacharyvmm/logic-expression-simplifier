@@ -85,43 +85,42 @@ void replace_parent_with_child(Node* parent, Node* child){
 	parent->right = NULL;
 }
 
+/*
+ * Simplifies expression were left and right has the same value (also works with negative cases).
+ */
 bool simple_reduce(Node* root){
 	bool left_not = left->type == NOT;
 	bool right_not = right->type == NOT;
 
-	if (!right_not && !left_not && compare_trees(root->left, root->right)) {
+	if (
+			(!right_not && !left_not && compare_trees(root->left, root->right))
+			 || (right_not && left_not && compare_trees(root->left->left, root->right->left))
+	) {
 		// left: POSITIVE and right: POSITIVE
-		switch (root->type){
-		case AND:
-		case OR:
-			// The root and right should be deleted, and replaced with left
-			break;
-		case THEN:
-		case BTHEN:
-			// p -> p = !p|p = T
-			// p <-> p = (p -> p) & (p -> p) = (!p|p) & (!p|p)= T & T = T
-			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
-			break;
-		case CLOSE:
-		case VAR:
-		case NOT:
-		case OPEN:
-		default:
-			printf("ERROR Case this state should never happen\n");
-			assert(false);
-			break;
-		}
-	} else if (right_not && left_not && compare_trees(root->left->left, root->right->left)) {
 		// left: NEGATIVE and right: NEGATIVE
 		switch (root->type){
 		case AND:
 		case OR:
+			// POSITIVE
+			// p & p = p
+			// p | p = p
+
+			// NEGATIVE
+			// !p & !p = !p
+			// !p | !p = !p
+
 			// The root and right should be deleted, and replaced with left
 			break;
 		case THEN:
 		case BTHEN:
+			// POSITIVE
+			// p -> p = !p|p = T
+			// p <-> p = (p -> p) & (p -> p) = (!p|p) & (!p|p)= T & T = T
+
+			// NEGATIVE
 			// !p -> !p = p|!p = T
 			// !p <-> !p = (!p -> !p) & (!p -> !p) = (p|!p) & (p|!p)= T & T = T
+
 			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
 			break;
 		case CLOSE:
@@ -133,51 +132,47 @@ bool simple_reduce(Node* root){
 			assert(false);
 			break;
 		}
-	} else if (right_not && compare_trees(root->left, root->right->left)) {
+	} else if (
+			(right_not && compare_trees(root->left, root->right->left))
+			|| (left_not && compare_trees(root->left->left, root->right))
+		) {
 		// left: POSITIVE and right: NEGATIVE
-		switch (root->type){
-		case AND:
-			// p & !p = F
-			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
-			break;
-		case OR:
-			// p | !p = T
-			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
-			break;
-		case THEN:
-			// p -> !p = !p|!p = !p
-			// The root and right should be deleted, and replaced with RIGHT
-			break;
-		case BTHEN:
-			// p <-> !p = (p -> !p) & (!p -> p) = (!p|!p) & (p|p) = !p & p = F
-			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
-			break;
-		case CLOSE:
-		case VAR:
-		case NOT:
-		case OPEN:
-		default:
-			printf("ERROR Case this state should never happen\n");
-			assert(false);
-			break;
-		}
-	} else if (left_not && compare_trees(root->left->left, root->right)) {
 		// left: NEGATIVE and right: POSITIVE
 		switch (root->type){
 		case AND:
+			// POSITIVE
+			// p & !p = F
+
+			// NEGATIVE
 			// !p & p = F
+
 			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
 			break;
 		case OR:
+			// POSITIVE
+			// p | !p = T
+
+			// NEGATIVE
 			// !p | p = T
+
 			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
 			break;
 		case THEN:
+			// POSITIVE
+			// p -> !p = !p|!p = !p
+
+			// NEGATIVE
 			// !p -> p = p|p = p
+
 			// The root and right should be deleted, and replaced with RIGHT
 			break;
 		case BTHEN:
+			// POSITIVE
+			// p <-> !p = (p -> !p) & (!p -> p) = (!p|!p) & (p|p) = !p & p = F
+
+			// NEGATIVE
 			// !p <-> p = (!p -> p) & (p -> !p) = (p|p) & (!p|!p)= p & !p = F
+
 			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
 			break;
 		case CLOSE:
@@ -193,6 +188,7 @@ bool simple_reduce(Node* root){
 }
 
 
+// TODO: Use compare_trees instead of type VAR and value checking
 bool special_reduce(Node* root, Type nested_type){
 	// p & (p | q) = p | (p & q) = p
 
