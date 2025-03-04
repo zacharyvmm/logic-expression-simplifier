@@ -2,11 +2,12 @@
 #define SOLVEFILE_H
 
 #include "node.h"
+#include <stdbool.h>
 
 /*
  * @description: reduce the size of the TREE
- * @ret: returns the root of the tree */
+ * @ret: returns if the tree was successfully reduced */
 
-Node* reduce_tree(Node* root);
+bool reduce_tree(Node* root);
 
 #endif

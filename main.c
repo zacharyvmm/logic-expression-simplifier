@@ -37,11 +37,12 @@ int main(int argc, char* argv[]) {
 
 	printf("\n--- START OF OPTIMIZATIONS ---\n");
 
-	Node* optimized_root = reduce_tree(root);
+	bool success = reduce_tree(root);
 
-	printf("OPTIMIZED: %p, ROOT: %p\n", optimized_root, root);
-	// They should be the same since it should mutate the tree
-	assert(root == optimized_root);
+	if (success)
+		printf("The tree has SUCCESSFULLY been reduced.\n");
+	else
+		printf("The tree has FAILLED to be reduced.\n");
 
 	printf("-- START OF TREEPRINT --\n");
 	treeprint(root, 0);

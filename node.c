@@ -1,8 +1,8 @@
 #include "node.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 typedef enum {
 	LEFT,
@@ -37,20 +37,37 @@ Node* create_node(Type type){
 //
 // That or I need to make a function that check if theirs an adjacent OR or AND that has that value
 bool compare_trees(Node* a, Node* b){
+	printf("compare_trees\n");
 	if (a == NULL && b == NULL)
 		return true;
 
-	if (a->type == b->type
+	if (a->type == b->type){
+
+		if (a->type == VAR)
+			return a->value == b->value;
+
+		bool left = true;
+		bool right = true;
+		if (	
+			a->left != NULL && b->left != NULL 
 			&& a->left->type == b->left->type
-			&& a->right->type == b->right->type
 			&& a->left->value == b->left->value
+		   ){
+			left = compare_trees(a->left, b->left);
+		}
+		
+		if (	
+			a->right != NULL && b->right != NULL 
+			&& a->right->type == b->right->type
 			&& a->right->value == b->right->value
-			){
-		bool left = compare_nodes(a->left, b->left);
-		bool right = compare_nodes(a->right, b->right);
+		   ){
+			right = compare_trees(a->right, b->right);
+		}
+		printf("Comparison: left: %d and right: %d\n", left, right);
 		return left && right;
 	}
 
+	printf("NO Comparison\n");
 	return false;
 }
 
@@ -96,15 +113,15 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 	switch(*state){
 		case LEFT:
 			printf("Went LEFT\n");
+			assert(parent->type != VAR);
+
 			parent->left = node;
 			node->parent = parent;
 
 			printf("Set on left\n");
-			if (type == OPEN)
+			if (type == OPEN || type == NOT)
 				*state = LEFT;
-			else if (parent->parent == NULL || 
-					(parent->parent->type == OPEN && node->type != NOT)
-				)
+			else if (parent->type == OPEN || parent->type == NOT)
 				// parent is the ROOT
 				// If this is the first node to be set
 				*state = FULL;
@@ -115,9 +132,13 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 			break;
 		case RIGHT:
 			printf("Went RIGHT\n");
+			assert(parent->type != VAR);
+			assert(parent->type != NOT);
+			assert(parent->type != OPEN);
+
 			parent->right = node;
 			node->parent = parent;
-			if (type == OPEN)
+			if (type == OPEN || type == NOT)
 				*state = LEFT;
 			else
 				*state = FULL;
@@ -133,17 +154,20 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 
 			Node* grandparent = parent->parent;
 
-			while (grandparent != NULL && grandparent->right != NULL
-					&& grandparent->type != OPEN){
+			printf("grandparent type: %d\n", grandparent->type);
+
+			while (grandparent != NULL && (grandparent->right != NULL
+					|| grandparent->type != OPEN)){
 				grandparent = grandparent->parent;
 			}
 
-			// TODO: Remove after testing
-			if (grandparent == NULL){
-				printf("I have made a grave error\n");
+			assert(grandparent->type != VAR);
+			assert(grandparent->type != NOT);
 
-				exit(1);
-			}
+
+			// TODO: Remove after testing
+			// I have made a grave error
+			assert(grandparent != NULL);
 
 			//if (grandparent->parent == NULL){
 			if (grandparent->type == OPEN){
@@ -160,10 +184,10 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 				*state = RIGHT;
 
 			} else {
-				grandparent->right = node;
+				grandparent->left = node;
 
 				// New node left and right empty
-				*state = LEFT;
+				*state = RIGHT;
 			}
 			node->parent = grandparent;
 
@@ -179,8 +203,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 		scope_stack_push(node);
 	}
 
-
-	printf("END is not '%d'\n", *state);
+	printf("END state type (0:left, 1:right, 2:full): '%d'\n", *state);
 
 	return node;
 }

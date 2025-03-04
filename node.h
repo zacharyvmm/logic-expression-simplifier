@@ -1,6 +1,8 @@
 #ifndef NODEFILE_H
 #define NODEFILE_H
 
+#include <stdbool.h>
+
 typedef enum {
 	VAR,
 	NOT,
