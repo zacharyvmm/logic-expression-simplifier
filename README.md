@@ -30,6 +30,17 @@ Let A = $$\binom{U}{k}$$
 F(A) would not be TAUTOLOGY, because all possiblities are accounted for.  
 But, it still has the property of not having a CONTRADICTION.  
 
+## LOGIC LAWS
+- [x] Idempotent Law
+- [x] Complementary Law
+- [-] ABSORPTION LAW
+- [ ] Distribution Law
+- [ ] Associative Law
+- [ ] Commutative Law
+- [ ] Involution Law
+- [ ] Dommination Law
+- [ ] Identity Law
+
 
 
 

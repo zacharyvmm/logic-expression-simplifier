@@ -103,6 +103,8 @@ void replace_parent_with_child(Node* parent, Node* child){
 
 /*
  * Simplifies expression were left and right has the same value (also works with negative cases).
+ *
+ * LAWS: IDEMPOTENT LAW and COMPLEMENTARY LAW
  */
 bool same_value_reduce(Node* root){
 	printf("same_value_reduce\n");
@@ -232,6 +234,8 @@ bool same_value_reduce(Node* root){
 
 // TODO: Use compare_trees instead of type VAR and value checking
 // TODO: Does not handle NOT on LEFT or RIGHT
+//
+// **ABSORPTION LAW**
 bool nested_value_reduce(Node* root, Type nested_type){
 	printf(">>nested_value_reduce\n");
 	// p & (p | q) = p | (p & q) = p
@@ -268,6 +272,7 @@ typedef bool (*Reduce_callback)(Node*, bool);
 
 bool try_reduce_tail(Node* root, Reduce_callback callback){
 	bool success;
+	#define CALLED_USING_CALLBACK true
 
 	if (root->left == NULL && root->right == NULL)
 		return true;
@@ -275,19 +280,17 @@ bool try_reduce_tail(Node* root, Reduce_callback callback){
 	if (root->left->type != VAR){
 		success = reduce_tree(root->left);
 
-		// TODO: It should also return true if the reduce changed nothing
 		if (!success || (root->left == NULL && root->right == NULL))
 			return true;
-		return callback(root, true);
+		return callback(root, CALLED_USING_CALLBACK);
 	}
 
 	if (root->right->type != VAR){
 		success = reduce_tree(root->right);
 
-		// TODO: It should also return true if the reduce changed nothing
 		if (!success || (root->left == NULL && root->right == NULL))
 			return true;
-		return callback(root, true);
+		return callback(root, CALLED_USING_CALLBACK);
 	}
 
 	return false;
@@ -329,15 +332,15 @@ bool reduce_tree(Node* root){
 	}
 
 	// paterns
-	#define NOT_CALLBACKED false
+	#define NOT_CALLED_USING_CALLBACK false
 	
 	switch(root->type){
 		case AND:
 			printf("AND\n");
-			return try_and_reduce(root, NOT_CALLBACKED);
+			return try_and_reduce(root, NOT_CALLED_USING_CALLBACK);
 		case OR:
 			printf("OR\n");
-			return try_or_reduce(root, NOT_CALLBACKED);
+			return try_or_reduce(root, NOT_CALLED_USING_CALLBACK);
 		case THEN:
 		case BTHEN:
 			printf("THEN\n");

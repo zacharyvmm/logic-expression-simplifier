@@ -22,7 +22,7 @@ test1: debug
 
 test2: debug
 	# TEST 2
-	$(EXECUTABLE) "( p & q | r ) | p"
+	$(EXECUTABLE) "( p & ( q | r ) ) | p"
 	#gdb -ex=r --args ./logic "( p ^ q | r ) | p"
 
 test3: debug
@@ -38,7 +38,7 @@ test5: debug
 	# Does it simplify to `p`
 	$(EXECUTABLE) "( p & p ) & ( p | p )"
 
-test: test1 test2 test3 test4
+test: test1 test2 test3 test4 test5
 
 
 default: build run
