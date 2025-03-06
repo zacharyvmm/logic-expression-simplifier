@@ -71,6 +71,7 @@ void delete_tree(Node* root){
 		delete_tree(root->right);
 
 	// CHANGE: SOFT DELETE
+	root->parent = NULL;
 	root->left = NULL;
 	root->right = NULL;
 	root->type = CLOSE;

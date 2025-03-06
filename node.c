@@ -18,15 +18,19 @@ Node* create_node(Type type){
 	printf("#%d - TYPE: %d\n", node_top, type);
 
 	if (node_top > MAX_NODES - 1){
-		printf("NODE: Error their is an overflow\n");
-		return NULL;
+		node_top = 0;
+		for (int i = 0; i < MAX_NODES; i++)
+			nodes[i] = (Node){.left=NULL, .right=NULL, .parent=NULL, .value='\0', .type=CLOSE};
+		printf("NOTE: Error their is an overflow\n");
+
+		assert(node_top > MAX_NODES - 1);
 	}
 
 	Node* node = &nodes[node_top++];
 	node->type = type;
 
 	node->value = '\0';
-	node->left = node->right = NULL;
+	node->parent = node->left = node->right = NULL;
 
 	return node;
 }
@@ -71,6 +75,107 @@ bool compare_trees(Node* a, Node* b){
 	return false;
 }
 
+char* tree_to_string(Node* root) {
+	#define TREE_STRING_SIZE 40
+	static char output[TREE_STRING_SIZE];
+
+	for (int i = 0; i < TREE_STRING_SIZE; i++)
+		output[i] = '\0';
+
+	int index = 0;
+	State state = LEFT;
+
+	bool built_string = false;
+
+	// left to right 
+	
+	root = root->left;
+	
+	while (!built_string) {
+		printf("string: %s\nstate: %d\n", output, state);
+		switch (state) {
+		case LEFT:
+			output[index++] = '(';
+			if (root->type == VAR){
+				output[index++] = root->value;
+				state = FULL;
+			}else if (root->left->type == VAR){
+				if (root->type == NOT){
+					output[index++] = '!';
+					output[index++] = root->left->value;
+					//root = root->parent;
+					state = FULL;
+				} else { 
+					output[index++] = root->left->value;
+					state = RIGHT;
+				}
+
+			}else{
+				root = root->left;
+				state = LEFT;
+			}
+			break;
+		case RIGHT:
+			printf("type: %d\n",root->type);
+			switch (root->type) {
+			case AND:
+				output[index++] = '&';
+				root = root->right;
+				break;
+			case OR:
+				output[index++] = '|';
+				root = root->right;
+				break;
+			case THEN:
+				output[index++] = '>';
+				root = root->right;
+				break;
+			case BTHEN:
+				output[index++] = '~';
+				root = root->right;
+				break;
+			case NOT:
+				root = root->left;
+				break;
+			case OPEN:
+				// OPTIMIZED to a single value
+				built_string = true;
+				output[index++] = '\0';
+				break;
+			case CLOSE:
+			case VAR:
+			default:
+				printf("ERROR: this state should never happen\n");
+				assert(false);
+				break;
+			}
+
+			if (root->type == VAR){
+				output[index++] = root->value;
+				state = FULL;
+			}else{
+				state = LEFT;
+			}
+			break;
+		case FULL:
+			do{
+				root = root->parent;
+				output[index++] = ')';
+			} while (root != NULL && root->parent != NULL && root->parent->right == root);
+			if (root->parent == NULL || root->parent->parent == NULL){
+				built_string = true;
+				output[index++] = '\0';
+				break;
+			}
+			root = root->parent;
+			state = RIGHT;
+			break;
+		}
+	}
+
+	return output;
+}
+
 // The pointers to the last open parenthasis
 // So that I can delete it later
 Node* scope[MAX_NESTING];
@@ -90,6 +195,7 @@ Node* scope_stack_pop(){
 
 
 Node* add_to_tree(Node* parent, State* state, Type type){
+	printf("add_to_tree\n");
 	Node* node;
 
 	if (type == CLOSE){
@@ -153,6 +259,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 			}
 
 			Node* grandparent = parent->parent;
+			printf("%p\n", grandparent);
 
 			printf("grandparent type: %d\n", grandparent->type);
 
@@ -213,6 +320,8 @@ Node* create_tree(char* input_string){
 	printf("Start\n");
 	printf("%s\n", input_string);
 	char* token = strtok(input_string, " ");
+	printf("first token: %s\n", token);
+
 	Node* root = create_node(OPEN);
 	printf("Created root\n");
 	//root->left = create_node(NULL); // first Operand

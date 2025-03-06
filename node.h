@@ -35,4 +35,6 @@ Node* create_tree(char* input_string);
 Node* create_node(Type type);
 bool compare_trees(Node* a, Node* b);
 
+char* tree_to_string(Node* root);
+
 #endif

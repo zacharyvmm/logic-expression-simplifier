@@ -1,29 +1,41 @@
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "node.h"
 #include "solve.h"
+#include "display.h"
 
-void treeprint(Node* root, int level){
-	if (root == NULL)
-		return;
-
-	for (int i = 0; i < level; i++)
-		printf(i==level-1 ? "|>": " ");
-
-	char* types[] = {"VAR\0", "NOT\0", "AND\0", "OR\0", "THEN\0", "BTHEN\0", "TRUE\0", "FALSE\0"};
-
-	if (root->value != '\0')
-		printf("%d(%c)\n", root->type, root->value);
-	else
-		printf("%d(%s)\n", root->type, types[root->type]);
-	treeprint(root->left, level+1);
-	treeprint(root->right, level+1);
-}
 
 int main(int argc, char* argv[]) {
-	if (argc == 0 || argc > 2){
-		printf("You must pass 1 argument to the program\n");
+	if (argc != 2){
+		printf("You have passed no or too many argument, thus the program will run all the tests.\n");
+
+		// IF NOT ARGUMENTS ARE PASSED THEN WE RUN TESTS 
+
+		char tests[NUM_TESTS][MAX_LENGHT_STRING] = {
+			"p & q",
+			"( p & ( q | r ) ) | p",
+			"( p & q | r ) | p",
+			"( ( p & q ) | p ) ~ ( ( p | q ) & p ) ~ p",
+			"( ( ! p & q ) | p ) ~ ( ( p | q ) & ! p ) ~ p",
+			"( p & p ) & ( p | p )",
+		};
+
+		char expected_outputs[NUM_TESTS][MAX_LENGHT_STRING] = {
+			"(p&q)",
+			"(p)",
+			"(p)",
+			"(p)",
+			"((q|p)&(!(p&q)))",
+			"(p)",
+		};
+
+		for (int i = 0; i < NUM_TESTS; i++){
+			test(&tests[i], &expected_outputs[i]);
+		}
+
+		return 0;
 	}
 
 	printf("---- START OF MAIN ----\n");
@@ -31,7 +43,7 @@ int main(int argc, char* argv[]) {
 	Node* root = create_tree(argv[1]);
 
 	printf("--- START OF TREEPRINT ---\n");
-	treeprint(root, 0);
+	treeprint(root);
 	printf("--- END OF TREEPRINT ---\n");
 	
 
@@ -45,7 +57,7 @@ int main(int argc, char* argv[]) {
 		printf("The tree has FAILLED to be reduced.\n");
 
 	printf("-- START OF TREEPRINT --\n");
-	treeprint(root, 0);
+	treeprint(root);
 	printf("-- END OF TREEPRINT --\n");
 
 	printf("--- END OF OPTIMIZATIONS ---\n");

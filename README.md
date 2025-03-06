@@ -33,13 +33,14 @@ But, it still has the property of not having a CONTRADICTION.
 ## LOGIC LAWS
 - [x] Idempotent Law
 - [x] Complementary Law
-- [-] ABSORPTION LAW
+- [-] Absorption Law
 - [ ] Distribution Law
 - [ ] Associative Law
 - [ ] Commutative Law
 - [ ] Involution Law
 - [ ] Dommination Law
 - [ ] Identity Law
+- [ ] DeMorgan Law
 
 
 
