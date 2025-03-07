@@ -15,7 +15,7 @@ int node_top = 0;
 
 // NOTE: Also technically push
 Node* create_node(Type type){
-	printf("#%d - TYPE: %d\n", node_top, type);
+	//printf("#%d - TYPE: %d\n", node_top, type);
 
 	if (node_top > MAX_NODES - 1){
 		node_top = 0;
@@ -75,6 +75,58 @@ bool compare_trees(Node* a, Node* b){
 	return false;
 }
 
+/*
+ * This function should be giving all the accessible nodes from a root node.
+ * The assumption is that the type we look to the other side of teh operator or a go up.
+ */
+void find_accessible(Node* nodes[], int* index, Node* from, Type type){
+	// left, right, neg left, neg right
+
+	if (from == NULL)
+		return;
+
+	if (from->type == NOT){
+		assert(type == AND || type == OR);
+		if (type == AND)
+			type = OR;
+		else
+			type = AND;
+		find_accessible(nodes, index, from->left, type);
+		return;
+	}
+
+	if (from->type != type)
+		return;
+
+	printf("#%d - %p:%d: '%c'\n", index, from, from->type, from->value);
+	*index = (*index)++;
+	nodes[*index] = from;
+
+	find_accessible(nodes, index, from->left, type);
+	find_accessible(nodes, index, from->right, type);
+
+	if (from->parent->left == from)
+		find_accessible(nodes, index, from->parent->right, type);
+	else
+		find_accessible(nodes, index, from->parent->left, type);
+}
+
+int accessible(Node* nodes[], Node* from){
+	int index = 0;
+
+	nodes[index++] = from->parent;
+
+	find_accessible(nodes, &index, from->left, from->parent->type);
+	find_accessible(nodes, &index, from->right, from->parent->type);
+
+	if (from->parent->left == from)
+		find_accessible(nodes, &index, from->parent->right, from->parent->type);
+	else
+		find_accessible(nodes, &index, from->parent->left, from->parent->type);
+
+	return index+1;
+}
+
 char* tree_to_string(Node* root) {
 	#define TREE_STRING_SIZE 40
 	static char output[TREE_STRING_SIZE];
@@ -95,6 +147,13 @@ char* tree_to_string(Node* root) {
 		printf("string: %s\nstate: %d\n", output, state);
 		switch (state) {
 		case LEFT:
+			if (root->type == OPEN){
+				return "T";
+			}
+			if (root->type == CLOSE){
+				return "F";
+			}
+
 			output[index++] = '(';
 			if (root->type == VAR){
 				output[index++] = root->value;
@@ -116,7 +175,7 @@ char* tree_to_string(Node* root) {
 			}
 			break;
 		case RIGHT:
-			printf("type: %d\n",root->type);
+			//printf("type: %d\n",root->type);
 			switch (root->type) {
 			case AND:
 				output[index++] = '&';
@@ -158,10 +217,11 @@ char* tree_to_string(Node* root) {
 			}
 			break;
 		case FULL:
-			do{
+			output[index++] = ')';
+			while (root != NULL && root->parent != NULL && root->parent->right == root){
 				root = root->parent;
 				output[index++] = ')';
-			} while (root != NULL && root->parent != NULL && root->parent->right == root);
+			}
 			if (root->parent == NULL || root->parent->parent == NULL){
 				built_string = true;
 				output[index++] = '\0';
@@ -195,7 +255,7 @@ Node* scope_stack_pop(){
 
 
 Node* add_to_tree(Node* parent, State* state, Type type){
-	printf("add_to_tree\n");
+	//printf("add_to_tree\n");
 	Node* node;
 
 	if (type == CLOSE){
@@ -218,13 +278,13 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 
 	switch(*state){
 		case LEFT:
-			printf("Went LEFT\n");
+			//printf("Went LEFT\n");
 			assert(parent->type != VAR);
 
 			parent->left = node;
 			node->parent = parent;
 
-			printf("Set on left\n");
+			//printf("Set on left\n");
 			if (type == OPEN || type == NOT)
 				*state = LEFT;
 			else if (parent->type == OPEN || parent->type == NOT)
@@ -237,7 +297,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 
 			break;
 		case RIGHT:
-			printf("Went RIGHT\n");
+			//printf("Went RIGHT\n");
 			assert(parent->type != VAR);
 			assert(parent->type != NOT);
 			assert(parent->type != OPEN);
@@ -251,7 +311,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 
 			break;
 		case FULL:
-			printf("Went UP\n");
+			//printf("Went UP\n");
 			// IF NOT an Operand
 			if (type == NOT || type == VAR) {
 				printf("Their needs to be an operand before this TOKEN\n");
@@ -259,9 +319,9 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 			}
 
 			Node* grandparent = parent->parent;
-			printf("%p\n", grandparent);
+			//printf("%p\n", grandparent);
 
-			printf("grandparent type: %d\n", grandparent->type);
+			//printf("grandparent type: %d\n", grandparent->type);
 
 			while (grandparent != NULL && (grandparent->right != NULL
 					|| grandparent->type != OPEN)){
@@ -278,8 +338,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 
 			//if (grandparent->parent == NULL){
 			if (grandparent->type == OPEN){
-				//printf("We are at root\n");
-				printf("We are at the closest OPEN\n");
+				//printf("We are at the closest OPEN\n");
 
 				// Insert node of left and attach the current left
 
@@ -310,20 +369,18 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 		scope_stack_push(node);
 	}
 
-	printf("END state type (0:left, 1:right, 2:full): '%d'\n", *state);
+	//printf("END state type (0:left, 1:right, 2:full): '%d'\n", *state);
 
 	return node;
 }
 
 
 Node* create_tree(char* input_string){
-	printf("Start\n");
-	printf("%s\n", input_string);
+	//printf("Start\n");
+	//printf("%s\n", input_string);
 	char* token = strtok(input_string, " ");
-	printf("first token: %s\n", token);
 
 	Node* root = create_node(OPEN);
-	printf("Created root\n");
 	//root->left = create_node(NULL); // first Operand
 
 	//Node* current = root->left;

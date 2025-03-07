@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
 			"p & q",
 			"( p & ( q | r ) ) | p",
 			"( p & q | r ) | p",
+			"( ( p | q ) & p ) > p",
 			"( ( p & q ) | p ) ~ ( ( p | q ) & p ) ~ p",
 			"( ( ! p & q ) | p ) ~ ( ( p | q ) & ! p ) ~ p",
 			"( p & p ) & ( p | p )",
@@ -26,6 +27,7 @@ int main(int argc, char* argv[]) {
 			"(p&q)",
 			"(p)",
 			"(p)",
+			"T",
 			"(p)",
 			"((q|p)&(!(p&q)))",
 			"(p)",
@@ -41,6 +43,9 @@ int main(int argc, char* argv[]) {
 	printf("---- START OF MAIN ----\n");
 
 	Node* root = create_tree(argv[1]);
+
+	Node nodes[50];
+	accessible(&nodes, root->left->right);
 
 	printf("--- START OF TREEPRINT ---\n");
 	treeprint(root);

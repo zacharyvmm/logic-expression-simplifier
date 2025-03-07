@@ -34,7 +34,7 @@ void treeprint(Node* root){
 
 #define COLOR_END "\33[0m"
 
-void test(char* input_string[], char* expected_output[]){
+void test(char input_string[], char expected_output[]){
 	printf("\n---- START OF TEST ----\n\ninput: '%s'\n\n", input_string);
 
 	char input[MAX_LENGHT_STRING];

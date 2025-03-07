@@ -29,11 +29,18 @@ typedef struct Node {
 
 /*
  * @description: tokenizes the string and builds a tree
- * @ret: returns the root of the tree */
-
+ * @ret: returns the root of the tree
+ */
 Node* create_tree(char* input_string);
 Node* create_node(Type type);
+
 bool compare_trees(Node* a, Node* b);
+
+/* 
+ * @description: Find all accessible Operators for a child node.
+ * @ret: returns the size of the operator nodes.
+ */
+int accessible(Node* nodes[], Node* from);
 
 char* tree_to_string(Node* root);
 
