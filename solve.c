@@ -342,7 +342,6 @@ bool reduce_then_bthen(Node* root){
 	//unpack_then(root->left);
 	//nested_value_reduce(root->left, AND);
 	if (parent->left != NULL && parent->left->type != VAR && parent->left->type != OPEN && parent->left->type != CLOSE){
-		printf("UNPACK BTHEN LEFT\n");
 		reduced = reduce_tree(parent->left);
 
 		if (reduced 
@@ -360,7 +359,6 @@ bool reduce_then_bthen(Node* root){
 	
 
 	if (parent->right != NULL && parent->right->type != VAR && parent->right->type != OPEN && parent->right->type != CLOSE){
-		printf("UNPACK BTHEN RIGHT\n");
 		reduced = reduce_tree(parent->right);
 
 		if (reduced 
@@ -424,6 +422,8 @@ bool reduce_branch(Node* root){
 			}
 		}
 
+	} else if (root->parent->type == NOT) {
+		return collapse_negation(root->parent);
 	} else {
 		assert(root->parent->type == THEN || root->parent->type == BTHEN);
 		reduced = reduced | reduce_then_bthen(root);

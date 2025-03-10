@@ -6,10 +6,7 @@
 Node nodes[MAX_NODES];
 int node_top = 0;
 
-// NOTE: Also technically push
 Node* create_node(Type type){
-	//printf("#%d - TYPE: %d\n", node_top, type);
-
 	if (node_top > MAX_NODES - 1){
 		printf("NOTE: Error their is an overflow\n");
 		assert(node_top > MAX_NODES - 1);
@@ -30,10 +27,16 @@ Node* copy_tree(Node* root){
 
 	Node* new_root = create_node(root->type);
 	new_root->value = root->value;
-	new_root->parent = root->parent;
 
 	new_root->left = copy_tree(root->left);
 	new_root->right = copy_tree(root->right);
+
+	if(new_root->left != NULL)
+		new_root->left->parent = new_root->left;
+
+	if(new_root->right != NULL)
+		new_root->right->parent = new_root->right;
+
 	return new_root;
 }
 
@@ -200,11 +203,10 @@ void reset_tree(){
 //
 // That or I need to make a function that check if theirs an adjacent OR or AND that has that value
 bool compare_trees(Node* a, Node* b){
-	printf("compare_trees\n");
-	//if (a == NULL && b == NULL)
-	//	return true;
-	if (a->type == b->type){
+	printf("compare_trees > %d -> %d:%d\n", a->parent->type, a->type, b->type);
+	assert(a != b);
 
+	if (a->type == b->type){
 		if (a->type == VAR)
 			return a->value == b->value;
 
@@ -286,6 +288,61 @@ int accessible(Node** nodes, Node* from){
 		find_accessible(nodes, &index, from->parent->left, from->parent->type);
 
 	return index;
+}
+
+
+bool collapse_negation(Node* node){
+	assert(node->type == NOT);
+
+	int count = 0;
+
+	Node* front = node;
+
+	while (node->type == NOT && node->left != NULL && node->parent->type == NOT){
+		node = node->left;
+		count++;
+	}
+	printf("count: %d\n", count);
+
+	Node* back = node;
+
+	node = front;
+
+	if (node->parent->type == NOT){
+		while (node->type == NOT && node->parent != NULL && node->parent->type == NOT){
+			node = node->parent;
+			count++;
+		}
+	}
+
+	front = node;
+
+	if (front == back)
+		return false;
+
+
+	back->parent->left = NULL;
+
+	if (front->left != NULL){
+		if (count % 2 == 0){
+			back->parent = front->parent;
+			if (front->parent->left == front)
+				front->parent->left = back;
+			else
+				front->parent->right = back;
+
+			delete_tree(front);
+		} else {
+			delete_tree(front->left);
+
+			back->parent = front;
+			front->left = back;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 

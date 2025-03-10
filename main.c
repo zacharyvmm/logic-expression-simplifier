@@ -20,7 +20,6 @@ int main(int argc, char* argv[]) {
 			"( p & q | r ) | p",
 			"( ( p | q ) & p ) > p",
 			"( ( p & q ) | p ) ~ ( ( p | q ) & p ) ~ p",
-			"( ( ! p & q ) | p ) ~ ( ( p | q ) & ! p ) ~ p",
 			"( p & p ) & ( p | p )",
 			"( ( p > q ) & ( q > r ) ) > ( p > r )",
 			"( p & ( p > q ) ) > q",
@@ -30,6 +29,7 @@ int main(int argc, char* argv[]) {
 			"p & ! ( p | ! q )",
 			"( ( p | q ) > r ) > ( ( p > r ) & ( q > r ) )",
 			"( ( p > r ) & ( q > r ) & ( p | q ) ) > r",
+			"( ( ! p & q ) | p ) ~ ( ( p | q ) & ! p ) ~ p",
 		};
 
 		char expected_outputs[NUM_TESTS][MAX_LENGHT_STRING] = {
@@ -38,16 +38,16 @@ int main(int argc, char* argv[]) {
 			"p",
 			"T",
 			"p",
-			"( ( q | p ) & ( ! ( p & q ) ) )",
 			"p",
 			"T",
 			"T",
-			"p",
+			"T",
 			"T",
 			"( p > q )",
 			"F",
 			"T",
 			"r",
+			"( ( q | p ) & ( ! ( p & q ) ) )",
 		};
 
 		for (int i = 0; i < NUM_TESTS; i++){

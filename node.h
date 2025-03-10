@@ -34,6 +34,7 @@ typedef struct Node {
 Node* create_node(Type type);
 void reset_tree();
 void add_negation(Node* node);
+bool collapse_negation(Node* node);
 void replace_parent_with_child(Node* parent, Node* child);
 void unpack_bthen(Node* root);
 void unpack_then(Node* root);

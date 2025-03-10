@@ -19,7 +19,8 @@ void display_treeprint(Node* root, int level){
 	if (root->value != '\0')
 		printf("%d(%c)\n", root->type, root->value);
 	else
-		printf("%d(%s)\n", root->type, types[root->type]);
+		//printf("%d(%s)\n", root->type, types[root->type]);
+		printf("%d(%s)(%p)\n", root->type, types[root->type], root);
 	display_treeprint(root->left, level+1);
 	display_treeprint(root->right, level+1);
 }
