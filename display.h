@@ -4,7 +4,7 @@
 
 #include "node.h"
 
-#define NUM_TESTS 7
+#define NUM_TESTS 15
 #define MAX_LENGHT_STRING 64
 
 void treeprint(Node* root);

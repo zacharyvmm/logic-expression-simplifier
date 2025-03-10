@@ -21,20 +21,36 @@ int main(int argc, char* argv[]) {
 			"( ( p & q ) | p ) ~ ( ( p | q ) & p ) ~ p",
 			"( ( ! p & q ) | p ) ~ ( ( p | q ) & ! p ) ~ p",
 			"( p & p ) & ( p | p )",
+			"( ( p > q ) & ( q > r ) ) > ( p > r )",
+			"( p & ( p > q ) ) > q",
+			"p > ( p > p )",
+			"( p > ( q & r ) ) > ( ( p > q ) & ( p > r ) )",
+			"p > ( q ~ p )",
+			"p & ! ( p | ! q )",
+			"( ( p | q ) > r ) > ( ( p > r ) & ( q > r ) )",
+			"( ( p > r ) & ( q > r ) & ( p | q ) ) > r",
 		};
 
 		char expected_outputs[NUM_TESTS][MAX_LENGHT_STRING] = {
-			"(p&q)",
-			"(p)",
-			"(p)",
+			"( p & q )",
+			"p",
+			"p",
 			"T",
-			"(p)",
-			"((q|p)&(!(p&q)))",
-			"(p)",
+			"p",
+			"( ( q | p ) & ( ! ( p & q ) ) )",
+			"p",
+			"T",
+			"T",
+			"p",
+			"T",
+			"( p > q )",
+			"F",
+			"T",
+			"r",
 		};
 
 		for (int i = 0; i < NUM_TESTS; i++){
-			test(&tests[i], &expected_outputs[i]);
+			test(tests[i], expected_outputs[i]);
 		}
 
 		return 0;
@@ -43,9 +59,6 @@ int main(int argc, char* argv[]) {
 	printf("---- START OF MAIN ----\n");
 
 	Node* root = create_tree(argv[1]);
-
-	Node nodes[50];
-	accessible(&nodes, root->left->right);
 
 	printf("--- START OF TREEPRINT ---\n");
 	treeprint(root);
@@ -69,6 +82,11 @@ int main(int argc, char* argv[]) {
 
 	printf("---- END OF MAIN ----\n");
 
+
+	char output[150]; 
+	tree_to_string(root, &output, 150);
+
+	printf("\n\n≡ %s\n", output);
 
 	return 0;
 }

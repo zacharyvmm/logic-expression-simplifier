@@ -18,11 +18,7 @@ Node* create_node(Type type){
 	//printf("#%d - TYPE: %d\n", node_top, type);
 
 	if (node_top > MAX_NODES - 1){
-		node_top = 0;
-		for (int i = 0; i < MAX_NODES; i++)
-			nodes[i] = (Node){.left=NULL, .right=NULL, .parent=NULL, .value='\0', .type=CLOSE};
 		printf("NOTE: Error their is an overflow\n");
-
 		assert(node_top > MAX_NODES - 1);
 	}
 
@@ -35,6 +31,13 @@ Node* create_node(Type type){
 	return node;
 }
 
+void reset_tree(){
+	node_top = 0;
+
+	//for (int i = 0; i < MAX_NODES; i++)
+	//	nodes[i] = (Node){.left=NULL, .right=NULL, .parent=NULL, .value='\0', .type=CLOSE};
+}
+
 // Checks if the trees are identical
 // TODO: This need to work with "equivalent" trees
 // In the sense that the order is different
@@ -42,16 +45,15 @@ Node* create_node(Type type){
 // That or I need to make a function that check if theirs an adjacent OR or AND that has that value
 bool compare_trees(Node* a, Node* b){
 	printf("compare_trees\n");
-	if (a == NULL && b == NULL)
-		return true;
-
+	//if (a == NULL && b == NULL)
+	//	return true;
 	if (a->type == b->type){
 
 		if (a->type == VAR)
 			return a->value == b->value;
 
-		bool left = true;
-		bool right = true;
+		bool left = false;
+		bool right = false;
 		if (	
 			a->left != NULL && b->left != NULL 
 			&& a->left->type == b->left->type
@@ -79,11 +81,14 @@ bool compare_trees(Node* a, Node* b){
  * This function should be giving all the accessible nodes from a root node.
  * The assumption is that the type we look to the other side of teh operator or a go up.
  */
-void find_accessible(Node* nodes[], int* index, Node* from, Type type){
+void find_accessible(Node** nodes, int* index, Node* from, Type type){
+	printf("find_accessible\n");
 	// left, right, neg left, neg right
 
 	if (from == NULL)
 		return;
+
+	printf("from->type: %d, type: %d\n", from->type, type);
 
 	if (from->type == NOT){
 		assert(type == AND || type == OR);
@@ -98,9 +103,9 @@ void find_accessible(Node* nodes[], int* index, Node* from, Type type){
 	if (from->type != type)
 		return;
 
-	printf("#%d - %p:%d: '%c'\n", index, from, from->type, from->value);
-	*index = (*index)++;
-	nodes[*index] = from;
+	printf("#%d - %p:%d: '%c'\n", *index, from, from->type, from->value);
+	nodes[(*index)++] = from;
+	printf("#%d - %p:%d: '%c'\n", *index, from, from->type, from->value);
 
 	find_accessible(nodes, index, from->left, type);
 	find_accessible(nodes, index, from->right, type);
@@ -111,129 +116,70 @@ void find_accessible(Node* nodes[], int* index, Node* from, Type type){
 		find_accessible(nodes, index, from->parent->left, type);
 }
 
-int accessible(Node* nodes[], Node* from){
+int accessible(Node** nodes, Node* from){
 	int index = 0;
+	printf("from: %d\n", from->type);
 
 	nodes[index++] = from->parent;
-
-	find_accessible(nodes, &index, from->left, from->parent->type);
-	find_accessible(nodes, &index, from->right, from->parent->type);
+	
+	find_accessible(nodes, &index, from, from->parent->type);
 
 	if (from->parent->left == from)
 		find_accessible(nodes, &index, from->parent->right, from->parent->type);
 	else
 		find_accessible(nodes, &index, from->parent->left, from->parent->type);
 
-	return index+1;
+	return index;
 }
 
-char* tree_to_string(Node* root) {
-	#define TREE_STRING_SIZE 40
-	static char output[TREE_STRING_SIZE];
 
-	for (int i = 0; i < TREE_STRING_SIZE; i++)
-		output[i] = '\0';
+char operator_chars[] = {'&', '|', '>', '~'};
 
-	int index = 0;
-	State state = LEFT;
+void create_tree_to_string(Node* root, char* buffer, int buffer_size) {
+	char left_buffer[buffer_size];
+	char right_buffer[buffer_size];
 
-	bool built_string = false;
-
-	// left to right 
-	
-	root = root->left;
-	
-	while (!built_string) {
-		printf("string: %s\nstate: %d\n", output, state);
-		switch (state) {
-		case LEFT:
-			if (root->type == OPEN){
-				return "T";
-			}
-			if (root->type == CLOSE){
-				return "F";
-			}
-
-			output[index++] = '(';
-			if (root->type == VAR){
-				output[index++] = root->value;
-				state = FULL;
-			}else if (root->left->type == VAR){
-				if (root->type == NOT){
-					output[index++] = '!';
-					output[index++] = root->left->value;
-					//root = root->parent;
-					state = FULL;
-				} else { 
-					output[index++] = root->left->value;
-					state = RIGHT;
-				}
-
-			}else{
-				root = root->left;
-				state = LEFT;
-			}
+	switch(root->type){
+		case VAR:
+			buffer[0] = root->value;
+			buffer[1] = '\0';
 			break;
-		case RIGHT:
-			//printf("type: %d\n",root->type);
-			switch (root->type) {
-			case AND:
-				output[index++] = '&';
-				root = root->right;
-				break;
-			case OR:
-				output[index++] = '|';
-				root = root->right;
-				break;
-			case THEN:
-				output[index++] = '>';
-				root = root->right;
-				break;
-			case BTHEN:
-				output[index++] = '~';
-				root = root->right;
-				break;
-			case NOT:
-				root = root->left;
-				break;
-			case OPEN:
-				// OPTIMIZED to a single value
-				built_string = true;
-				output[index++] = '\0';
-				break;
-			case CLOSE:
-			case VAR:
-			default:
-				printf("ERROR: this state should never happen\n");
-				assert(false);
-				break;
-			}
+		case AND:
+		case OR:
+		case THEN:
+		case BTHEN:
+			create_tree_to_string(root->left, &left_buffer, buffer_size);
+			create_tree_to_string(root->right, &right_buffer, buffer_size);
 
-			if (root->type == VAR){
-				output[index++] = root->value;
-				state = FULL;
-			}else{
-				state = LEFT;
-			}
+			sprintf(buffer, "( %s %c %s )", left_buffer, operator_chars[root->type - 2], right_buffer);
 			break;
-		case FULL:
-			output[index++] = ')';
-			while (root != NULL && root->parent != NULL && root->parent->right == root){
-				root = root->parent;
-				output[index++] = ')';
-			}
-			if (root->parent == NULL || root->parent->parent == NULL){
-				built_string = true;
-				output[index++] = '\0';
-				break;
-			}
-			root = root->parent;
-			state = RIGHT;
+		case NOT:
+			create_tree_to_string(root->left, &left_buffer, buffer_size);
+			sprintf(buffer, "! %s", left_buffer);
 			break;
-		}
+		case CLOSE:
+			buffer[0] = 'F';
+			buffer[1] = '\0';
+			break;
+		case OPEN:
+			buffer[0] = 'T';
+			buffer[1] = '\0';
+			break;
+		default:
+			printf("DEFAULT\n");
+			assert(false);
+			break;
 	}
 
-	return output;
+	return;
+}
+
+void tree_to_string(Node* root, char* buffer, int buffer_size) {
+	// if this is the root
+	assert(root->parent == NULL);
+	assert(root->type == OPEN);
+
+	create_tree_to_string(root->left, buffer, buffer_size);
 }
 
 // The pointers to the last open parenthasis

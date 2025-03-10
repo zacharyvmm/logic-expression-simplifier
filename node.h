@@ -33,6 +33,7 @@ typedef struct Node {
  */
 Node* create_tree(char* input_string);
 Node* create_node(Type type);
+void reset_tree();
 
 bool compare_trees(Node* a, Node* b);
 
@@ -42,6 +43,6 @@ bool compare_trees(Node* a, Node* b);
  */
 int accessible(Node* nodes[], Node* from);
 
-char* tree_to_string(Node* root);
+void tree_to_string(Node* root, char* buffer, int buffer_size);
 
 #endif

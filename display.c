@@ -28,6 +28,7 @@ void treeprint(Node* root){
 	display_treeprint(root, 0);
 }
 
+
 #define COLOR_RED "\33[41m"
 #define COLOR_GREEN "\33[42m"
 #define BOLD "\33[1m"
@@ -63,7 +64,8 @@ void test(char input_string[], char expected_output[]){
 	printf("--- END OF OPTIMIZATIONS ---\n");
 
 	printf("--- START OF EVALUATING EXPECTED OUTPUT ---\n\n");
-	char* output = tree_to_string(root);
+	char output[150]; 
+	tree_to_string(root, &output, 150);
 
 	printf("output string: %s\n", output);
 	printf("expected output: %s\n", expected_output);
@@ -76,4 +78,5 @@ void test(char input_string[], char expected_output[]){
 
 
 	printf("-- END OF TEST --\n");
+	reset_tree();
 }

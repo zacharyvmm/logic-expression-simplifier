@@ -11,6 +11,7 @@ Node* copy_tree(Node* root){
 
 	Node* new_root = create_node(root->type);
 	new_root->value = root->value;
+	new_root->parent = root->parent;
 
 	new_root->left = copy_tree(root->left);
 	new_root->right = copy_tree(root->right);
@@ -19,6 +20,7 @@ Node* copy_tree(Node* root){
 
 void unpack_then(Node* root){
 	assert(root->type == THEN);
+
 	// change type to OR	
 	root->type = OR;
 
@@ -37,9 +39,12 @@ void unpack_then(Node* root){
 void unpack_bthen(Node* root){
 	assert(root->type == BTHEN);
 
-
 	Node* new_node = copy_tree(root);
 	Node* left = new_node->left;
+
+	new_node->parent = root;
+	new_node->left->parent = new_node;
+	new_node->right->parent = new_node;
 
 	new_node->left = new_node->right;
 	new_node->right = left;
@@ -50,6 +55,7 @@ void unpack_bthen(Node* root){
 
 	// NOTE: left is also used to create the THEN of the left side
 	left = create_node(THEN);
+	left->parent = root;
 	root->left->parent = left;
 	root->right->parent = left;
 
@@ -108,20 +114,20 @@ void replace_parent_with_child(Node* parent, Node* child){
  *
  * LAWS: IDEMPOTENT LAW and COMPLEMENTARY LAW
  */
-
-// TODO: Refact to take type, right, and left
-bool same_value_reduce(Node* root){
+bool same_value_reduce(Node* left, Node* right){
 	printf("same_value_reduce\n");
-	bool left_not = root->left->type == NOT;
-	bool right_not = root->right->type == NOT;
+
+	Node* parent = left->parent;
+	bool left_not = left->type == NOT;
+	bool right_not = right->type == NOT;
 
 	if (
-			(!right_not && !left_not && compare_trees(root->left, root->right))
-			 || (right_not && left_not && compare_trees(root->left->left, root->right->left))
+			(!right_not && !left_not && compare_trees(left, right))
+			 || (right_not && left_not && compare_trees(left->left, right->left))
 	) {
 		// left: POSITIVE and right: POSITIVE
 		// left: NEGATIVE and right: NEGATIVE
-		switch (root->type){
+		switch (parent->type){
 		case AND:
 		case OR:
 			// POSITIVE
@@ -132,12 +138,15 @@ bool same_value_reduce(Node* root){
 			// !p & !p = !p
 			// !p | !p = !p
 
-			printf("SAME value: op: %d, left: %c, right: %c\n", root->type, root->left->value, root->right->value);
 			// The root and right should be deleted, and replaced with LEFT OR RIGHT
-			replace_parent_with_child(root, root->right);
+			if (left->parent == right->parent || right->parent->right == right)
+				replace_parent_with_child(right->parent, right);
+			else
+				replace_parent_with_child(right->parent, right->parent->left);
 			return true;
 		case THEN:
 		case BTHEN:
+			assert(left->parent == right->parent);
 			// POSITIVE
 			// p -> p = !p|p = T
 			// p <-> p = (p -> p) & (p -> p) = (!p|p) & (!p|p)= T & T = T
@@ -147,12 +156,13 @@ bool same_value_reduce(Node* root){
 			// !p <-> !p = (!p -> !p) & (!p -> !p) = (p|!p) & (p|!p)= T & T = T
 
 			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
-			delete_tree(root->left);
-			delete_tree(root->right);
+
+			delete_tree(left);
+			delete_tree(right);
 			
-			root->left = NULL;
-			root->right = NULL;
-			root->type = OPEN;
+			parent->left = NULL;
+			parent->right = NULL;
+			parent->type = OPEN;
 			return true;
 		case CLOSE:
 		case VAR:
@@ -164,12 +174,12 @@ bool same_value_reduce(Node* root){
 			break;
 		}
 	} else if (
-			(right_not && compare_trees(root->left, root->right->left))
-			|| (left_not && compare_trees(root->left->left, root->right))
+			(right_not && (compare_trees(left, right->left)))
+			|| (left_not && compare_trees(left->left, right))
 		) {
 		// left: POSITIVE and right: NEGATIVE
 		// left: NEGATIVE and right: POSITIVE
-		switch (root->type){
+		switch (parent->type){
 		case AND:
 			// POSITIVE
 			// p & !p = F
@@ -179,12 +189,13 @@ bool same_value_reduce(Node* root){
 
 			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
 
-			delete_tree(root->left);
-			delete_tree(root->right);
+			delete_tree(left);
+			delete_tree(right);
 
-			root->left = NULL;
-			root->right = NULL;
-			root->type = CLOSE;
+			// BUG: This does not work
+			parent->left = NULL;
+			parent->right = NULL;
+			parent->type = CLOSE;
 			return true;
 		case OR:
 			// POSITIVE
@@ -195,14 +206,15 @@ bool same_value_reduce(Node* root){
 
 			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
 
-			delete_tree(root->left);
-			delete_tree(root->right);
+			delete_tree(left);
+			delete_tree(right);
 
-			root->left = NULL;
-			root->right = NULL;
-			root->type = OPEN;
+			parent->left = NULL;
+			parent->right = NULL;
+			parent->type = OPEN;
 			return true;
 		case THEN:
+			assert(left->parent == right->parent);
 			// POSITIVE
 			// p -> !p = !p|!p = !p
 
@@ -211,9 +223,13 @@ bool same_value_reduce(Node* root){
 
 			// The root and right should be deleted, and replaced with RIGHT
 
-			replace_parent_with_child(root, root->right);
+			if (left->parent == right->parent || right->parent->right == right)
+				replace_parent_with_child(right->parent, right);
+			else
+				replace_parent_with_child(right->parent, right->parent->left);
 			return true;
 		case BTHEN:
+			assert(left->parent == right->parent);
 			// POSITIVE
 			// p <-> !p = (p -> !p) & (!p -> p) = (!p|!p) & (p|p) = !p & p = F
 
@@ -222,13 +238,13 @@ bool same_value_reduce(Node* root){
 
 			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
 
-			delete_tree(root->left);
-			delete_tree(root->right);
+			delete_tree(left);
+			delete_tree(right);
 
 
-			root->left = NULL;
-			root->right = NULL;
-			root->type = CLOSE;
+			parent->left = NULL;
+			parent->right = NULL;
+			parent->type = CLOSE;
 			return true;
 		case CLOSE:
 		case VAR:
@@ -244,35 +260,121 @@ bool same_value_reduce(Node* root){
 	return false;
 }
 
+bool bool_value_reduce(Node* left, Node* right){
+	printf("bool_value_reduce\n");
+
+	if(left->type != OPEN && left->type != CLOSE
+			&& right->type != OPEN && right->type != CLOSE)
+		return false;
+
+	switch (left->parent->type){
+	case AND:
+		// AND
+		// T & p = p
+		// T & T = T
+		// T & F = F
+
+		// F & p = F
+		// F & F = F
+		// F & T = F
+		
+		if (left->type == CLOSE || right->type == CLOSE){
+			// replace OPERATOR with CLOSE
+		} else if (left->type == OPEN){
+			// replace OPERATOR with RIGHT
+		} else if (right->type == OPEN){
+			// replace OPERATOR with LEFT
+		}
+
+	case OR:
+		// OR
+		// T | p = T
+		// T | T = T
+		// T | F = T
+
+		// F | p = p
+		// F | F = F
+		// F | T = T
+
+		if (left->type == OPEN || right->type == OPEN){
+			// replace OPERATOR with OPEN
+		} else if (left->type == CLOSE){
+			// replace OPERATOR with RIGHT
+		} else if (right->type == CLOSE){
+			// replace OPERATOR with LEFT
+		}
+	case THEN:
+		// THEN
+		// T -> p = p
+		// T -> T = T
+		// T -> F = F
+
+		// F -> p = T
+		// F -> F = T
+		// F -> T = T
+
+		if (left->type == CLOSE || right->type == CLOSE){
+			// replace OPERATOR with OPEN
+		} else if (left->type == OPEN){
+			// replace OPERATOR with RIGHT
+		} else if (right->type == OPEN){
+			// replace OPERATOR with LEFT
+		}
+	case BTHEN:
+		// BIDERECTIONAL THEN
+		// T <-> p = (T -> p) & (p -> T) = p & T = p
+		// F <-> p = (F -> p) & (p -> F) = T & !p = !p
+		// T <-> T = (T -> T) & (T -> T) = T
+		// F <-> F = (F -> F) & (F -> F) = T & T = T
+		// T <-> F = (T -> F) & (F -> T) = F & T = F
+		if (left->type == CLOSE || right->type == CLOSE){
+			// replace OPERATOR with OPEN
+		} else if (left->type == OPEN){
+			// replace OPERATOR with RIGHT
+		} else if (right->type == OPEN){
+			// replace OPERATOR with LEFT
+		} else if (left->type == CLOSE){
+			// replace OPERATOR with NOT RIGHT
+		} else if (right->type == CLOSE){
+			// replace OPERATOR with NOT LEFT
+		}
+	case CLOSE:
+	case VAR:
+	case NOT:
+	case OPEN:
+	default:
+		printf("ERROR: this state should never happen\n");
+		assert(false);
+		break;
+	}
+}
+
 
 // TODO: Use compare_trees instead of type VAR and value checking
 // TODO: Does not handle NOT on LEFT or RIGHT
 //
 // **ABSORPTION LAW**
-bool nested_value_reduce(Node* root, Type nested_type){
+bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 	printf("  nested_value_reduce\n");
 	// p & (p | q) = p | (p & q) = p
 
-	Node* left = root->left;
-	Node* right = root->right;
-
 	// Can just check the value of the sides
-	if (left->type == nested_type && right->type == VAR 
-			&& (left->left->value == right->value || left->right->value == right->value)){
+	if (left->type == nested_type && left->left != NULL && left->right != NULL
+			&& ( compare_trees(left->left, right) || compare_trees(left->right, right) )){
 			// replace root with right
 
 			printf("First case\n");
 			printf(">> NESTED VALUE REDUCE <<\n");
-			replace_parent_with_child(root, right);
+			replace_parent_with_child(right->parent, right);
 			return true;
-	}else if(right->type == nested_type && left->type == VAR
-			&& (right->left->value == left->value || right->right->value == left->value)){
+	}else if(right->type == nested_type && right->left != NULL && right->right != NULL
+			&& ( compare_trees(right->left, left) || compare_trees(right->right, left) )){
 			// replace root with left
 
 			printf("Second case\n");
 			printf(">> NESTED VALUE REDUCE <<\n");
 
-			replace_parent_with_child(root, left);
+			replace_parent_with_child(left->parent, left);
 			return true;
 	}
 			
@@ -281,164 +383,139 @@ bool nested_value_reduce(Node* root, Type nested_type){
 	return false;
 }
 
-/*
-void optimal_operation(Node* node) {
-	if (node->type == AND || node->type == OR){
-		Node left_nodes[50];
-		int left_options = accessible(&left_nodes, node->left);
+bool reduce_then_bthen(Node* root){
+	Node* parent = root->parent;
 
-		for (int i = 0; i < left_options; i++)
 
-		Node right_nodes[50];
-		int right_options = accessible(&right_nodes, node);
+	bool reduced = false;
+
+	// TRY TO OPTIMIZE RIGHT AND LEFT BEFORE UNPACKING
+	if (parent->left != NULL && parent->left->type != VAR)
+		reduced = reduced | reduce_tree(parent->left);
+
+	if (parent->right != NULL && parent->right->type != VAR)
+		reduced = reduced | reduce_tree(parent->right);
+	// END OF PRE OPTIMIZATION
+
+
+	///////////////////////// THEN /////////////////////////
+
+	if (parent->type == THEN){
+		printf("UNPACK THEN\n");
+		unpack_then(parent);
+		//nested_value_reduce(root, AND);
+		return reduce_tree(parent);
 	}
 
-	// p & p
-	// `p & ( p | q ) = p` opertation
-	// expand
-	// do nothing
+	///////////////////////// BTHEN /////////////////////////
+
+	assert(root->parent->type == BTHEN);
+
+	printf("UNPACK BTHEN\n");
+	unpack_bthen(parent);
+
+	//unpack_then(root->left);
+	//nested_value_reduce(root->left, AND);
+	if (parent->left != NULL && parent->left->type != VAR)
+		reduced = reduced | reduce_tree(parent->left);
+
+
+	//unpack_then(root->right);
+	//nested_value_reduce(root->right, AND);
+	
+
+	if (parent->right != NULL && parent->right->type != VAR)
+		reduced = reduced | reduce_tree(parent->right);
+
+	//assert(parent->left == root || parent->right == root);
+	//if (parent->left == root)
+	//	reduced = reduced | nested_value_reduce(root, parent->right, OR);
+	//else
+	//	reduced = reduced | nested_value_reduce(root, parent->left, OR);
+
+	return reduced;
 }
-*/
 
-// Basiclly => when the children are reduced try again
-typedef bool (*Reduce_callback)(Node*, bool);
 
-bool try_reduce_tail(Node* root, Reduce_callback callback){
-	#define CALLED_USING_CALLBACK true
+bool reduce_branch(Node* root){
+	bool reduced = false;
+	assert(root != NULL);
 
-	if (root->left == NULL && root->right == NULL)
-		return true;
+	printf("type: %d - (%p)\n", root->type, root);
+	assert(root->parent != NULL);
 
-	if (root->left->type != VAR){
-		reduce_tree(root->left);
+	while (root->parent->type == NOT)
+		root = root->parent;
 
-		if (root->left == NULL && root->right == NULL)
-			return true;
-		return callback(root, CALLED_USING_CALLBACK);
+	if (root->parent->type == OR || root->parent->type == AND){
+		printf("%d - %d\n", root->parent->type, root->type);
+		Node* accessible_operators[5];
+		int options = accessible(accessible_operators, root);
+
+		printf("%p('%c') has `%d` options [operator = %d]\n", root, root->value, options, root->parent->type);
+
+		for (int i = 0; i < options; i++){
+			printf("%d\n", accessible_operators[i]->type);
+			Node* other = accessible_operators[i]->left == root ? 
+				accessible_operators[i]->right : accessible_operators[i]->left;
+
+			printf("%p - %p %d\n", root, other, other->type);
+			if (same_value_reduce(root, other)){
+				printf("%p - %p %d\n", root, other, other->type);
+				return true;
+			}
+			
+
+			switch (root->parent->type){
+				case AND:
+					reduced = reduced | nested_value_reduce(root, other, OR);
+					break;
+				case OR:
+					reduced = reduced | nested_value_reduce(root, other, AND);
+					break;
+			}
+
+			// if (root->left != NULL && root->left->type != VAR)
+			//	reduced = reduced | reduce_tree(root->left);
+
+			//if (root->right != NULL && root->right->type != VAR)
+			//	reduced = reduced | reduce_tree(root->right);
+		}
+
+	} else {
+		assert(root->parent->type == THEN || root->parent->type == BTHEN);
+		reduced = reduced | reduce_then_bthen(root);
 	}
 
-	if (root->right->type != VAR){
-		reduce_tree(root->right);
+	if (root->left != NULL && root->left->type != VAR)
+		reduced = reduced | reduce_tree(root->left);
 
-		if (root->left == NULL && root->right == NULL)
-			return true;
-		return callback(root, CALLED_USING_CALLBACK);
-	}
+	if (root->right != NULL && root->right->type != VAR)
+		reduced = reduced | reduce_tree(root->right);
 
-	return false;
+	return reduced;
 }
-
-bool try_and_reduce(Node* root, bool callbacked){
-	printf("try_and_reduce\n");
-	if (same_value_reduce(root))
-		return true;
-
-	if (nested_value_reduce(root, OR))
-		return true;
-
-	if (callbacked)
-		return false;
-
-	if (root->left->type != VAR)
-		reduce_tree(root->left);
-
-	if (root->right->type != VAR)
-		reduce_tree(root->right);
-
-
-	return try_reduce_tail(root, &try_and_reduce);
-}
-
-bool try_or_reduce(Node* root, bool callbacked){
-	printf("try_or_reduce\n");
-	if (same_value_reduce(root))
-		return true;
-
-	if (nested_value_reduce(root, AND))
-		return true;
-
-	if (callbacked)
-		return false;
-
-	if (root->left->type != VAR)
-		reduce_tree(root->left);
-
-	if (root->right->type != VAR)
-		reduce_tree(root->right);
-
-	return try_reduce_tail(root, &try_or_reduce);
-}
-
-bool try_then_reduce(Node* root, bool callbacked){
-	printf("try_then_reduce\n");
-	if (same_value_reduce(root))
-		return true;
-
-	if (callbacked){
-		unpack_then(root);
-		if (try_or_reduce(root, false))
-			return true;
-
-		return false;
-	}
-
-	return try_reduce_tail(root, &try_then_reduce);
-}
-
-bool try_bthen_reduce(Node* root, bool callbacked){
-	printf("try_bthen_reduce\n");
-	if (same_value_reduce(root))
-		return true;
-
-	if (callbacked){
-		printf("UNPACKING BIDIRECTIONAL THEN <<<<<<<< \n");
-		unpack_bthen(root);
-
-		#define SKIP_SAME_VALUE_REDUCE true
-		bool left = try_then_reduce(root->left, SKIP_SAME_VALUE_REDUCE);
-		bool right = try_then_reduce(root->right, SKIP_SAME_VALUE_REDUCE);
-		bool self = try_and_reduce(root, false);
-		return left && right && self;
-	}
-
-	return try_reduce_tail(root, &try_bthen_reduce);
-}
-
-
+Node* init;
 bool reduce_tree(Node* root){
-	printf("REDUCE TREE: %p, type: %d, left: %p, right: %p\n", root, root->type, root->left, root->right);
-	if (root == NULL || (root->left == NULL && root->right == NULL)){
-		return NULL;
+	printf("reduce_tree\n");
+	if (root->parent == NULL && root->type == OPEN){
+		init = root;
+		root = root->left;
 	}
+	treeprint(init);
 
-	// paterns
-	#define NOT_CALLED_USING_CALLBACK false
-	
-	switch(root->type){
-		case VAR:
-			// printf("hello\n");
-			// return false;
-			break;
-		case AND:
-			printf("AND\n");
-			return try_and_reduce(root, NOT_CALLED_USING_CALLBACK);
-		case OR:
-			printf("OR\n");
-			return try_or_reduce(root, NOT_CALLED_USING_CALLBACK);
-		case THEN:
-			printf("THEN\n");
-			return try_then_reduce(root, NOT_CALLED_USING_CALLBACK);
-		case BTHEN:
-			printf("BTHEN\n");
-			return try_bthen_reduce(root, NOT_CALLED_USING_CALLBACK);
-		case CLOSE:
-		case NOT:
-		case OPEN:
-		default:
-			printf("DEFAULT\n");
-			return reduce_tree(root->left);
-			break;
-	}
-	
-	return false;
+	assert(root != NULL);
+	assert(root->type != VAR);
+	assert(root->type != OPEN);
+	assert(root->type != CLOSE);
+	assert(root->left != NULL);
+
+	bool reduced = false;
+		
+	if (root->left != NULL)
+		reduced = reduced | reduce_branch(root->left);
+	if (root->right != NULL)
+		reduced = reduced | reduce_branch(root->right);
+
+	return reduced;
 }
