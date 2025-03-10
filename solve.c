@@ -437,6 +437,7 @@ bool reduce_branch(Node* root){
 
 	return reduced;
 }
+
 Node* init;
 bool reduce_tree(Node* root){
 	printf("reduce_tree\n");
