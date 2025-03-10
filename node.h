@@ -31,9 +31,14 @@ typedef struct Node {
  * @description: tokenizes the string and builds a tree
  * @ret: returns the root of the tree
  */
-Node* create_tree(char* input_string);
 Node* create_node(Type type);
 void reset_tree();
+void add_negation(Node* node);
+void replace_parent_with_child(Node* parent, Node* child);
+void unpack_bthen(Node* root);
+void unpack_then(Node* root);
+void tautology(Node* node);
+void contradiction(Node* node);
 
 bool compare_trees(Node* a, Node* b);
 

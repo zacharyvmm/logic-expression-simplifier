@@ -5,110 +5,6 @@
 #include <stdio.h>
 
 
-Node* copy_tree(Node* root){
-	if (root == NULL)
-		return NULL;
-
-	Node* new_root = create_node(root->type);
-	new_root->value = root->value;
-	new_root->parent = root->parent;
-
-	new_root->left = copy_tree(root->left);
-	new_root->right = copy_tree(root->right);
-	return new_root;
-}
-
-void unpack_then(Node* root){
-	assert(root->type == THEN);
-
-	// change type to OR	
-	root->type = OR;
-
-	// Add NOT above left
-	
-	assert(root->left != NULL);
-
-	Node* left_not = create_node(NOT);
-	
-	left_not->parent = root;
-	left_not->left = root->left;
-	root->left->parent = left_not;
-	root->left = left_not;
-}
-
-void unpack_bthen(Node* root){
-	assert(root->type == BTHEN);
-
-	Node* new_node = copy_tree(root);
-	Node* left = new_node->left;
-
-	new_node->parent = root;
-	new_node->left->parent = new_node;
-	new_node->right->parent = new_node;
-
-	new_node->left = new_node->right;
-	new_node->right = left;
-	new_node->type = THEN;
-
-	root->type = AND;
-
-
-	// NOTE: left is also used to create the THEN of the left side
-	left = create_node(THEN);
-	left->parent = root;
-	root->left->parent = left;
-	root->right->parent = left;
-
-	left->left = root->left;
-	left->right = root->right;
-
-	root->left = left;
-	root->right = new_node;
-
-	//unpack_then(root->left);
-	//unpack_then(root->right);
-}
-
-void delete_tree(Node* root){
-	assert(root != NULL);
-
-	if (root->left != NULL)
-		delete_tree(root->left);
-
-	if (root->right != NULL)
-		delete_tree(root->right);
-
-	// CHANGE: SOFT DELETE
-	root->parent = root->left = root->right = NULL;
-	root->value = '\0';
-	root->type = CLOSE;
-	root = NULL;
-
-	return;
-}
-
-// the children of the parent are not preserved
-void replace_parent_with_child(Node* parent, Node* child){
-	child->parent = parent->parent;
-
-	if (parent->parent->left == parent)
-		parent->parent->left = child;
-	else
-		parent->parent->right = child;
-
-	// CHANGE: SOFT DELETE
-	
-	if (parent->left == child){
-		delete_tree(parent->right);
-	}else{
-		delete_tree(parent->left);
-	}
-	
-	parent->left = NULL;
-	parent->right = NULL;
-	parent = NULL;
-}
-
 /*
  * Simplifies expression were left and right has the same value (also works with negative cases).
  *
@@ -157,12 +53,7 @@ bool same_value_reduce(Node* left, Node* right){
 
 			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
 
-			delete_tree(left);
-			delete_tree(right);
-			
-			parent->left = NULL;
-			parent->right = NULL;
-			parent->type = OPEN;
+			tautology(parent);
 			return true;
 		case CLOSE:
 		case VAR:
@@ -189,13 +80,7 @@ bool same_value_reduce(Node* left, Node* right){
 
 			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
 
-			delete_tree(left);
-			delete_tree(right);
-
-			// BUG: This does not work
-			parent->left = NULL;
-			parent->right = NULL;
-			parent->type = CLOSE;
+			contradiction(parent);
 			return true;
 		case OR:
 			// POSITIVE
@@ -206,12 +91,7 @@ bool same_value_reduce(Node* left, Node* right){
 
 			// The left and right should be deleted, and the root should be replaced with a TAUTOLOGY
 
-			delete_tree(left);
-			delete_tree(right);
-
-			parent->left = NULL;
-			parent->right = NULL;
-			parent->type = OPEN;
+			tautology(parent);
 			return true;
 		case THEN:
 			assert(left->parent == right->parent);
@@ -223,10 +103,7 @@ bool same_value_reduce(Node* left, Node* right){
 
 			// The root and right should be deleted, and replaced with RIGHT
 
-			if (left->parent == right->parent || right->parent->right == right)
-				replace_parent_with_child(right->parent, right);
-			else
-				replace_parent_with_child(right->parent, right->parent->left);
+			replace_parent_with_child(right->parent, right);
 			return true;
 		case BTHEN:
 			assert(left->parent == right->parent);
@@ -238,13 +115,7 @@ bool same_value_reduce(Node* left, Node* right){
 
 			// The left and right should be deleted, and the root should be replaced with a CONTRADICTION
 
-			delete_tree(left);
-			delete_tree(right);
-
-
-			parent->left = NULL;
-			parent->right = NULL;
-			parent->type = CLOSE;
+			contradiction(parent);
 			return true;
 		case CLOSE:
 		case VAR:
@@ -263,6 +134,13 @@ bool same_value_reduce(Node* left, Node* right){
 bool bool_value_reduce(Node* left, Node* right){
 	printf("bool_value_reduce\n");
 
+	assert(left != NULL);
+	assert(right != NULL);
+	assert(left->parent != NULL);
+	assert(right->parent != NULL);
+
+	Node* parent = left->parent;
+
 	if(left->type != OPEN && left->type != CLOSE
 			&& right->type != OPEN && right->type != CLOSE)
 		return false;
@@ -280,12 +158,22 @@ bool bool_value_reduce(Node* left, Node* right){
 		
 		if (left->type == CLOSE || right->type == CLOSE){
 			// replace OPERATOR with CLOSE
+			contradiction(parent);
+			return true;
 		} else if (left->type == OPEN){
 			// replace OPERATOR with RIGHT
+			if (left->parent == right->parent || right->parent->right == right)
+				replace_parent_with_child(right->parent, right);
+			else
+				replace_parent_with_child(right->parent, right->parent->left);
 		} else if (right->type == OPEN){
 			// replace OPERATOR with LEFT
+			if (left->parent == right->parent || right->parent->left == left)
+				replace_parent_with_child(right->parent, left);
+			else
+				replace_parent_with_child(right->parent, right->parent->right);
 		}
-
+		break;
 	case OR:
 		// OR
 		// T | p = T
@@ -298,12 +186,26 @@ bool bool_value_reduce(Node* left, Node* right){
 
 		if (left->type == OPEN || right->type == OPEN){
 			// replace OPERATOR with OPEN
+			tautology(parent);
+			return true;
 		} else if (left->type == CLOSE){
 			// replace OPERATOR with RIGHT
+			if (left->parent == right->parent || right->parent->right == right)
+				replace_parent_with_child(right->parent, right);
+			else
+				replace_parent_with_child(right->parent, right->parent->left);
 		} else if (right->type == CLOSE){
 			// replace OPERATOR with LEFT
+			if (left->parent == right->parent || right->parent->left == left)
+				replace_parent_with_child(right->parent, left);
+			else
+				replace_parent_with_child(right->parent, right->parent->right);
 		}
+		break;
 	case THEN:
+		//printf("%p - %d <> %p - %d\n", left->parent, left->parent->type, right->parent, right->parent->type);
+		printf("%p <> %p\n", left->parent, right->parent);
+		assert(left->parent == right->parent);
 		// THEN
 		// T -> p = p
 		// T -> T = T
@@ -315,12 +217,24 @@ bool bool_value_reduce(Node* left, Node* right){
 
 		if (left->type == CLOSE || right->type == CLOSE){
 			// replace OPERATOR with OPEN
+			tautology(parent);
+			return true;
 		} else if (left->type == OPEN){
 			// replace OPERATOR with RIGHT
+			if (left->parent == right->parent || right->parent->right == right)
+				replace_parent_with_child(right->parent, right);
+			else
+				replace_parent_with_child(right->parent, right->parent->left);
 		} else if (right->type == OPEN){
 			// replace OPERATOR with LEFT
+			if (left->parent == right->parent || right->parent->left == left)
+				replace_parent_with_child(right->parent, left);
+			else
+				replace_parent_with_child(right->parent, right->parent->right);
 		}
+		break;
 	case BTHEN:
+		assert(left->parent == right->parent);
 		// BIDERECTIONAL THEN
 		// T <-> p = (T -> p) & (p -> T) = p & T = p
 		// F <-> p = (F -> p) & (p -> F) = T & !p = !p
@@ -329,15 +243,27 @@ bool bool_value_reduce(Node* left, Node* right){
 		// T <-> F = (T -> F) & (F -> T) = F & T = F
 		if (left->type == CLOSE || right->type == CLOSE){
 			// replace OPERATOR with OPEN
+			tautology(parent);
+			return true;
 		} else if (left->type == OPEN){
 			// replace OPERATOR with RIGHT
+			if (left->parent == right->parent || right->parent->right == right)
+				replace_parent_with_child(right->parent, right);
+			else
+				replace_parent_with_child(right->parent, right->parent->left);
 		} else if (right->type == OPEN){
 			// replace OPERATOR with LEFT
+			if (left->parent == right->parent || right->parent->left == left)
+				replace_parent_with_child(right->parent, left);
+			else
+				replace_parent_with_child(right->parent, right->parent->right);
 		} else if (left->type == CLOSE){
+			
 			// replace OPERATOR with NOT RIGHT
 		} else if (right->type == CLOSE){
 			// replace OPERATOR with NOT LEFT
 		}
+		break;
 	case CLOSE:
 	case VAR:
 	case NOT:
@@ -386,14 +312,13 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 bool reduce_then_bthen(Node* root){
 	Node* parent = root->parent;
 
-
 	bool reduced = false;
 
 	// TRY TO OPTIMIZE RIGHT AND LEFT BEFORE UNPACKING
-	if (parent->left != NULL && parent->left->type != VAR)
+	if (parent->left != NULL && parent->left->type != VAR && parent->left->type != OPEN && parent->left->type != CLOSE)
 		reduced = reduced | reduce_tree(parent->left);
 
-	if (parent->right != NULL && parent->right->type != VAR)
+	if (parent->right != NULL && parent->right->type != VAR && parent->right->type != OPEN && parent->right->type != CLOSE)
 		reduced = reduced | reduce_tree(parent->right);
 	// END OF PRE OPTIMIZATION
 
@@ -416,16 +341,36 @@ bool reduce_then_bthen(Node* root){
 
 	//unpack_then(root->left);
 	//nested_value_reduce(root->left, AND);
-	if (parent->left != NULL && parent->left->type != VAR)
-		reduced = reduced | reduce_tree(parent->left);
+	if (parent->left != NULL && parent->left->type != VAR && parent->left->type != OPEN && parent->left->type != CLOSE){
+		printf("UNPACK BTHEN LEFT\n");
+		reduced = reduce_tree(parent->left);
+
+		if (reduced 
+				&& parent != NULL 
+				&& (parent->type == OPEN || parent->type == CLOSE)
+				&& parent->parent != NULL 
+				&& reduce_tree(parent->parent)){
+			return true;
+		}
+	}
 
 
 	//unpack_then(root->right);
 	//nested_value_reduce(root->right, AND);
 	
 
-	if (parent->right != NULL && parent->right->type != VAR)
-		reduced = reduced | reduce_tree(parent->right);
+	if (parent->right != NULL && parent->right->type != VAR && parent->right->type != OPEN && parent->right->type != CLOSE){
+		printf("UNPACK BTHEN RIGHT\n");
+		reduced = reduce_tree(parent->right);
+
+		if (reduced 
+				&& parent != NULL 
+				&& (parent->type == OPEN || parent->type == CLOSE)
+				&& parent->parent != NULL 
+				&& reduce_tree(parent->parent)){
+			return true;
+		}
+	}
 
 	//assert(parent->left == root || parent->right == root);
 	//if (parent->left == root)
@@ -443,9 +388,9 @@ bool reduce_branch(Node* root){
 
 	printf("type: %d - (%p)\n", root->type, root);
 	assert(root->parent != NULL);
-
-	while (root->parent->type == NOT)
-		root = root->parent;
+	assert(root->parent->type != VAR);
+	assert(root->parent->type != OPEN);
+	assert(root->parent->type != CLOSE);
 
 	if (root->parent->type == OR || root->parent->type == AND){
 		printf("%d - %d\n", root->parent->type, root->type);
@@ -460,8 +405,11 @@ bool reduce_branch(Node* root){
 				accessible_operators[i]->right : accessible_operators[i]->left;
 
 			printf("%p - %p %d\n", root, other, other->type);
-			if (same_value_reduce(root, other)){
+			if (same_value_reduce(root, other) || bool_value_reduce(root, other)){
 				printf("%p - %p %d\n", root, other, other->type);
+
+				if (root->parent != NULL && root->parent->parent != NULL)
+					reduce_branch(root->parent);
 				return true;
 			}
 			
@@ -474,12 +422,6 @@ bool reduce_branch(Node* root){
 					reduced = reduced | nested_value_reduce(root, other, AND);
 					break;
 			}
-
-			// if (root->left != NULL && root->left->type != VAR)
-			//	reduced = reduced | reduce_tree(root->left);
-
-			//if (root->right != NULL && root->right->type != VAR)
-			//	reduced = reduced | reduce_tree(root->right);
 		}
 
 	} else {

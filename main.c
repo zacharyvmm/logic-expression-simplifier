@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "node.h"
+#include "parser.h"
 #include "solve.h"
 #include "display.h"
 

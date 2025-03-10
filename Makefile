@@ -4,7 +4,7 @@ SOURCEDIR = "."
 SOURCES := $(shell find $(SOURCEDIR) -name '*.c')
 
 EXECUTABLE = "./logic"
-OBJECTS := main.o node.o solve.o display.o
+OBJECTS := main.o node.o solve.o display.o parser.o
 
 %.o: %.c $(SOURCES)
 	$(CC) -c -o $@ $<
