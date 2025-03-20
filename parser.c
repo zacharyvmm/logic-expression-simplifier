@@ -164,6 +164,7 @@ Node* create_tree(char* input_string){
 	State state = LEFT;
 
 	while (token != NULL){
+		assert(token[0] != '\0');
 		switch (token[0]){
 			// NOT
 			case '!':
@@ -206,7 +207,10 @@ Node* create_tree(char* input_string){
 				break;
 		}
 
-		token = strtok(NULL, " ");
+		if (token[1] == '\0')
+			token = strtok(NULL, " ");
+		else
+			token++;
 	}
 	return root;
 }

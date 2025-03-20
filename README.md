@@ -1,6 +1,9 @@
 # LOGIC SOLVER
 This is a logic expression solver.
 
+## TODO:
+- [ ] [Operator Precedence](http://logic.stanford.edu/intrologic/dictionary/operator_precedence.html)
+
 # THEORY
 ## POWER SET - SIMPLIFICATION
 The expression `(p ∧ q) ∨ (r ∧ (p ∨ q))` is at it's simplest.
