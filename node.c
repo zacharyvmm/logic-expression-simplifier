@@ -211,31 +211,6 @@ void swap(Node* a, Node* b){
 	Node* temp = a->parent;
 	a->parent = b->parent;
 	b->parent = temp;
-	/*
-	Node temp;
-
-
-	// Load `a` into temp
-	temp.type = a->type;
-	temp.parent = a->parent;
-	temp.left = a->left;
-	temp.right = a->right;
-	temp.value = a->value;
-
-	// Load `b` into `a`
-	a->type = b->type;
-	a->parent = b->parent;
-	a->left = b->left;
-	a->right = b->right;
-	a->value = b->value;
-
-	// Load temp into `b`
-	b->type = temp.type;
-	b->parent = temp.parent;
-	b->left = temp.left;
-	b->right = temp.right;
-	b->value = temp.value;
-	*/
 }
 
 void reset_tree(){

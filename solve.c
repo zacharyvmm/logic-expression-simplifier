@@ -292,8 +292,6 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 			printf("First case (left): %d(%p) - %d(%p)\n", left->parent->type, left->parent, left->type, left);
 			printf(">> NESTED VALUE REDUCE <<\n");
 
-			Node* old_parent;
-
 			if (left->parent == right->parent){
 				printf(">>>>>>>>>1\n");
 				replace_parent_with_child(right->parent, right);
@@ -305,16 +303,8 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 					swap(left->parent->left, right);
 
 				replace_parent_with_child(left->parent, right);
-			} else if (contains(right->parent, left)){
-				printf(">>>>>>>>>3\n");
-				if (right->parent->left == right)
-					swap(right->parent->right, right);
-				else
-					swap(right->parent->left, right);
-
-				replace_parent_with_child(right->parent, right);
 			} else {
-				printf(">>>>>>>>>4\n");
+				printf(">>>>>>>>>3\n");
 				if (right->parent->left == right)
 					swap(right->parent->right, right);
 				else
@@ -344,16 +334,8 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 					swap(left->parent->left, right);
 				
 				replace_parent_with_child(left->parent, right);
-			} else if (contains(right->parent, left->parent)){
-				printf(">>>>>>>>>3\n");
-				if (right->parent->left == right)
-					swap(right->parent->right, right);
-				else
-					swap(right->parent->left, right);
-
-				replace_parent_with_child(right->parent, right);
 			} else {
-				printf(">>>>>>>>>4\n");
+				printf(">>>>>>>>>3\n");
 				if (right->parent->left == right)
 					swap(right->parent->right, right);
 				else
