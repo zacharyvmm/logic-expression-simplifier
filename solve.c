@@ -275,7 +275,6 @@ bool bool_value_reduce(Node* left, Node* right){
 	}
 }
 
-
 // TODO: Use compare_trees instead of type VAR and value checking
 // TODO: Does not handle NOT on LEFT or RIGHT
 //
@@ -289,18 +288,80 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 			&& ( compare_trees(left->left, right) || compare_trees(left->right, right) )){
 			// replace root with right
 
-			printf("First case\n");
+			printf("First case (right): %d(%p) - %d(%p)\n", right->parent->type, right->parent, right->type, right);
+			printf("First case (left): %d(%p) - %d(%p)\n", left->parent->type, left->parent, left->type, left);
 			printf(">> NESTED VALUE REDUCE <<\n");
-			replace_parent_with_child(right->parent, right);
+
+			Node* old_parent;
+
+			if (left->parent == right->parent){
+				printf(">>>>>>>>>1\n");
+				replace_parent_with_child(right->parent, right);
+			} else if (contains(left->parent, right)){
+				printf(">>>>>>>>>2\n");
+				if (left->parent->left == left)
+					swap(left->parent->right, right);
+				else
+					swap(left->parent->left, right);
+
+				replace_parent_with_child(left->parent, right);
+			} else if (contains(right->parent, left)){
+				printf(">>>>>>>>>3\n");
+				if (right->parent->left == right)
+					swap(right->parent->right, right);
+				else
+					swap(right->parent->left, right);
+
+				replace_parent_with_child(right->parent, right);
+			} else {
+				printf(">>>>>>>>>4\n");
+				if (right->parent->left == right)
+					swap(right->parent->right, right);
+				else
+					swap(right->parent->left, right);
+
+				replace_parent_with_child(right->parent, right);
+			}
+
+
 			return true;
 	}else if(right->type == nested_type && right->left != NULL && right->right != NULL
 			&& ( compare_trees(right->left, left) || compare_trees(right->right, left) )){
 			// replace root with left
 
-			printf("Second case\n");
+			printf("Second case: %d(%p) - %d(%p)\n", right->parent->type, right->parent, right->type, right);
+			printf("Second case: %d(%p) - %d(%p)\n", left->parent->type, left->parent, left->type, left);
 			printf(">> NESTED VALUE REDUCE <<\n");
 
-			replace_parent_with_child(left->parent, left);
+			if (left->parent == right->parent){
+				printf(">>>>>>>>>1\n");
+				replace_parent_with_child(right->parent, right);
+			} else if (contains(left->parent, right->parent)){
+				printf(">>>>>>>>>2\n");
+				if (left->parent->left == left)
+					swap(left->parent->right, right);
+				else
+					swap(left->parent->left, right);
+				
+				replace_parent_with_child(left->parent, right);
+			} else if (contains(right->parent, left->parent)){
+				printf(">>>>>>>>>3\n");
+				if (right->parent->left == right)
+					swap(right->parent->right, right);
+				else
+					swap(right->parent->left, right);
+
+				replace_parent_with_child(right->parent, right);
+			} else {
+				printf(">>>>>>>>>4\n");
+				if (right->parent->left == right)
+					swap(right->parent->right, right);
+				else
+					swap(right->parent->left, right);
+
+				replace_parent_with_child(right->parent, right);
+			}
+
 			return true;
 	}
 			

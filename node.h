@@ -42,6 +42,9 @@ void tautology(Node* node);
 void contradiction(Node* node);
 
 bool compare_trees(Node* a, Node* b);
+bool contains(Node* parent, Node* child);
+void swap(Node* a, Node* b);
+void delete_tree(Node* root);
 
 /* 
  * @description: Find all accessible Operators for a child node.

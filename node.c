@@ -53,7 +53,6 @@ void delete_tree(Node* root){
 	root->parent = root->left = root->right = NULL;
 	root->value = '\0';
 	root->type = CLOSE;
-	root = NULL;
 
 	return;
 }
@@ -170,6 +169,11 @@ void unpack_bthen(Node* root){
 
 // the children of the parent are not preserved
 void replace_parent_with_child(Node* parent, Node* child){
+	assert(parent != NULL);
+	assert(child != NULL);
+
+	printf("parent: %d - %p, child %d - %p\n", parent->type, parent, child->type, child);
+	printf("parent->parent: %d - %p\n", parent->parent->type, parent->parent);
 	child->parent = parent->parent;
 
 	if (parent->parent->left == parent)
@@ -188,6 +192,50 @@ void replace_parent_with_child(Node* parent, Node* child){
 	parent->left = NULL;
 	parent->right = NULL;
 	parent = NULL;
+}
+
+void swap(Node* a, Node* b){
+	assert(a != NULL);
+	assert(b != NULL);
+
+	if (b->parent->left == b)
+		b->parent->left = a;
+	else
+		b->parent->right = a;
+
+	if (a->parent->left == a)
+		a->parent->left = b;
+	else
+		a->parent->right = b;
+
+	Node* temp = a->parent;
+	a->parent = b->parent;
+	b->parent = temp;
+	/*
+	Node temp;
+
+
+	// Load `a` into temp
+	temp.type = a->type;
+	temp.parent = a->parent;
+	temp.left = a->left;
+	temp.right = a->right;
+	temp.value = a->value;
+
+	// Load `b` into `a`
+	a->type = b->type;
+	a->parent = b->parent;
+	a->left = b->left;
+	a->right = b->right;
+	a->value = b->value;
+
+	// Load temp into `b`
+	b->type = temp.type;
+	b->parent = temp.parent;
+	b->left = temp.left;
+	b->right = temp.right;
+	b->value = temp.value;
+	*/
 }
 
 void reset_tree(){
@@ -288,6 +336,18 @@ int accessible(Node** nodes, Node* from){
 		find_accessible(nodes, &index, from->parent->left, from->parent->type);
 
 	return index;
+}
+
+bool contains(Node* parent, Node* child){
+	assert(parent != NULL);
+	assert(child != NULL);
+
+	while (child->parent != NULL) {
+		if (child->parent == parent)
+			return true;
+		child = child->parent;
+	}
+	return false;
 }
 
 
