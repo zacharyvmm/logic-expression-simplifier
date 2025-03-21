@@ -339,8 +339,6 @@ bool reduce_then_bthen(Node* root){
 	printf("UNPACK BTHEN\n");
 	unpack_bthen(parent);
 
-	//unpack_then(root->left);
-	//nested_value_reduce(root->left, AND);
 	if (parent->left != NULL && parent->left->type != VAR && parent->left->type != OPEN && parent->left->type != CLOSE){
 		reduced = reduce_tree(parent->left);
 
@@ -354,9 +352,6 @@ bool reduce_then_bthen(Node* root){
 	}
 
 
-	//unpack_then(root->right);
-	//nested_value_reduce(root->right, AND);
-	
 
 	if (parent->right != NULL && parent->right->type != VAR && parent->right->type != OPEN && parent->right->type != CLOSE){
 		reduced = reduce_tree(parent->right);
@@ -370,11 +365,6 @@ bool reduce_then_bthen(Node* root){
 		}
 	}
 
-	//assert(parent->left == root || parent->right == root);
-	//if (parent->left == root)
-	//	reduced = reduced | nested_value_reduce(root, parent->right, OR);
-	//else
-	//	reduced = reduced | nested_value_reduce(root, parent->left, OR);
 
 	return reduced;
 }
@@ -406,7 +396,7 @@ bool reduce_branch(Node* root){
 			if (same_value_reduce(root, other) || bool_value_reduce(root, other)){
 				printf("%p - %p %d\n", root, other, other->type);
 
-				if (root->parent != NULL && root->parent->parent != NULL)
+				if (root->parent != NULL && root->parent->parent != NULL && root->parent->parent->type != OPEN)
 					reduce_branch(root->parent);
 				return true;
 			}

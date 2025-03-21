@@ -29,7 +29,6 @@ Node* scope_stack_pop(){
 	return scope[--scope_top];
 }
 
-
 Node* add_to_tree(Node* parent, State* state, Type type){
 	//printf("add_to_tree\n");
 	Node* node;
@@ -50,17 +49,20 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 	}
 
 	
-	node = create_node(type);
+	node = create_node(type); 
 
 	switch(*state){
 		case LEFT:
 			//printf("Went LEFT\n");
 			assert(parent->type != VAR);
+			assert(type != AND);
+			assert(type != OR);
+			assert(type != THEN);
+			assert(type != BTHEN);
 
 			parent->left = node;
 			node->parent = parent;
 
-			//printf("Set on left\n");
 			if (type == OPEN || type == NOT)
 				*state = LEFT;
 			else if (parent->type == OPEN || parent->type == NOT)
@@ -69,75 +71,62 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 				*state = FULL;
 			else
 				*state = RIGHT;
-
-
 			break;
 		case RIGHT:
-			//printf("Went RIGHT\n");
 			assert(parent->type != VAR);
 			assert(parent->type != NOT);
 			assert(parent->type != OPEN);
 
+			assert(type != AND);
+			assert(type != OR);
+			assert(type != THEN);
+			assert(type != BTHEN);
+	
 			parent->right = node;
 			node->parent = parent;
 			if (type == OPEN || type == NOT)
 				*state = LEFT;
 			else
 				*state = FULL;
-
 			break;
 		case FULL:
-			//printf("Went UP\n");
-			// IF NOT an Operand
 			if (type == NOT || type == VAR) {
 				printf("Their needs to be an operand before this TOKEN\n");
 				break;
 			}
 
 			Node* grandparent = parent->parent;
-			//printf("%p\n", grandparent);
 
-			//printf("grandparent type: %d\n", grandparent->type);
-
+			// POTENTIAL BUG: The operator precedence logic `type > grandparent->type` only works because of the order of the ENUM in node.h
 			while (grandparent != NULL && (grandparent->right != NULL
-					|| grandparent->type != OPEN)){
+						|| grandparent->type != OPEN) && type > grandparent->type){
 				grandparent = grandparent->parent;
 			}
+
+
+			// I have made a grave error
+			assert(grandparent != NULL);
 
 			assert(grandparent->type != VAR);
 			assert(grandparent->type != NOT);
 
 
-			// TODO: Remove after testing
-			// I have made a grave error
-			assert(grandparent != NULL);
+			*state = RIGHT;
 
-			//if (grandparent->parent == NULL){
+			// While bubbling a placement based on operator precedence it stops
+			if (grandparent->type != OPEN && grandparent->right != NULL) {
+				node->left = grandparent->right;
+				grandparent->right = node;
+				node->parent = grandparent;
+				break;
+			}
+
 			if (grandparent->type == OPEN){
-				//printf("We are at the closest OPEN\n");
-
-				// Insert node of left and attach the current left
-
 				node->left = grandparent->left;
 				node->left->parent = node;
-				grandparent->left = node;
-				
-				// New node only right empty
-				*state = RIGHT;
-
-			} else {
-				grandparent->left = node;
-
-				// New node left and right empty
-				*state = RIGHT;
 			}
+			grandparent->left = node;
 			node->parent = grandparent;
-
-
-
-			//while (grandparent->left != NULL && grandparent->right != NULL)
-			
-			// create a node above the parent
 			break;
 	}
 
@@ -145,7 +134,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 		scope_stack_push(node);
 	}
 
-	//printf("END state type (0:left, 1:right, 2:full): '%d'\n", *state);
+	printf("END state type (0:left, 1:right, 2:full): '%d'\n", *state);
 
 	return node;
 }
