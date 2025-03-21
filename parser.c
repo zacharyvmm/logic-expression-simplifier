@@ -116,6 +116,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 			// While bubbling a placement based on operator precedence it stops
 			if (grandparent->type != OPEN && grandparent->right != NULL) {
 				node->left = grandparent->right;
+				grandparent->right->parent = node;
 				grandparent->right = node;
 				node->parent = grandparent;
 				break;
