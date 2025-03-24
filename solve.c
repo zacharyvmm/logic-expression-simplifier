@@ -293,10 +293,10 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 			printf(">> NESTED VALUE REDUCE <<\n");
 
 			if (left->parent == right->parent){
-				printf(">>>>>>>>>1\n");
+				//printf(">>>>>>>>>1\n");
 				replace_parent_with_child(right->parent, right);
 			} else if (contains(left->parent, right)){
-				printf(">>>>>>>>>2\n");
+				//printf(">>>>>>>>>2\n");
 				if (left->parent->left == left)
 					swap(left->parent->right, right);
 				else
@@ -304,11 +304,7 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 
 				replace_parent_with_child(left->parent, right);
 			} else {
-				printf(">>>>>>>>>3\n");
-				if (right->parent->left == right)
-					swap(right->parent->right, right);
-				else
-					swap(right->parent->left, right);
+				//printf(">>>>>>>>>3\n");
 
 				replace_parent_with_child(right->parent, right);
 			}
@@ -324,24 +320,20 @@ bool nested_value_reduce(Node* left, Node* right, Type nested_type){
 			printf(">> NESTED VALUE REDUCE <<\n");
 
 			if (left->parent == right->parent){
-				printf(">>>>>>>>>1\n");
-				replace_parent_with_child(right->parent, right);
-			} else if (contains(left->parent, right->parent)){
-				printf(">>>>>>>>>2\n");
-				if (left->parent->left == left)
-					swap(left->parent->right, right);
-				else
-					swap(left->parent->left, right);
-				
-				replace_parent_with_child(left->parent, right);
-			} else {
-				printf(">>>>>>>>>3\n");
+				//printf(">>>>>>>>>1\n");
+				replace_parent_with_child(left->parent, left);
+			} else if (contains(right->parent, left->parent)){
+				//printf(">>>>>>>>>2\n");
 				if (right->parent->left == right)
-					swap(right->parent->right, right);
+					swap(right->parent->right, left);
 				else
-					swap(right->parent->left, right);
+					swap(right->parent->left, left);
+				
+				replace_parent_with_child(right->parent, left);
+			} else {
+				//printf(">>>>>>>>>3\n");
 
-				replace_parent_with_child(right->parent, right);
+				replace_parent_with_child(left->parent, left);
 			}
 
 			return true;
@@ -478,7 +470,7 @@ bool reduce_tree(Node* root){
 		init = root;
 		root = root->left;
 	}
-	treeprint(init);
+	//treeprint(init);
 
 	assert(root != NULL);
 	assert(root->type != VAR);

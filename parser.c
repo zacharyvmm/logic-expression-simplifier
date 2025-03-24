@@ -135,7 +135,7 @@ Node* add_to_tree(Node* parent, State* state, Type type){
 		scope_stack_push(node);
 	}
 
-	printf("END state type (0:left, 1:right, 2:full): '%d'\n", *state);
+	//printf("END state type (0:left, 1:right, 2:full): '%d'\n", *state);
 
 	return node;
 }
