@@ -37,12 +37,12 @@ But, it still has the property of not having a CONTRADICTION.
 - [x] Idempotent Law
 - [x] Complementary Law
 - [x] Absorption Law
-- [ ] Distribution Law
 - [x] Associative Law
 - [x] Commutative Law
-- [ ] Involution Law
-- [ ] Dommination Law
-- [ ] Identity Law
+- [x] Dommination Law
+- [x] Identity Law
+- [x] Involution Law (`! ! x` is equivalent to `x`)
+- [ ] Distribution Law
 - [ ] DeMorgan Law
 
 # SYNTAX

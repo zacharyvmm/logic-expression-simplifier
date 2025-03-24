@@ -327,57 +327,62 @@ bool contains(Node* parent, Node* child){
 
 
 bool collapse_negation(Node* node){
+	printf("Collapse Negation\n");
 	assert(node->type == NOT);
 
-	int count = 0;
+	int count = 1;
 
-	Node* front = node;
+	Node* top = node;
 
-	while (node->type == NOT && node->left != NULL && node->parent->type == NOT){
+	while(top->parent != NULL && top->parent->type == NOT){
+		top = top->parent;
+		count++;
+	}
+
+	while(node->left != NULL && node->left->type == NOT){
 		node = node->left;
 		count++;
 	}
-	printf("count: %d\n", count);
 
-	Node* back = node;
-
-	node = front;
-
-	if (node->parent->type == NOT){
-		while (node->type == NOT && node->parent != NULL && node->parent->type == NOT){
-			node = node->parent;
-			count++;
-		}
-	}
-
-	front = node;
-
-	if (front == back)
+	if (count == 1)
 		return false;
 
+	if (count % 2 == 0){
+		if (top->parent->left == top)
+			top->parent->left = node->left;
+		else
+			top->parent->right = node->left;
 
-	back->parent->left = NULL;
+		node->left->parent = top->parent;
 
-	if (front->left != NULL){
-		if (count % 2 == 0){
-			back->parent = front->parent;
-			if (front->parent->left == front)
-				front->parent->left = back;
-			else
-				front->parent->right = back;
+		while (top != node){
+			top->parent = NULL;
+			top->type = CLOSE;
+			
+			top = top->left;
 
-			delete_tree(front);
-		} else {
-			delete_tree(front->left);
-
-			back->parent = front;
-			front->left = back;
+			top->parent->left = NULL;
 		}
+	} else {
+		if (top->parent->left == top)
+			top->parent->left = node;
+		else
+			top->parent->right = node;
 
-		return true;
+		node->left->parent = top->parent;
+
+		while (top->left != node){
+			top->parent = NULL;
+			top->type = CLOSE;
+			
+			top = top->left;
+
+			top->parent->left = NULL;
+		}
 	}
 
-	return false;
+	return true;
+
 }
 
 
