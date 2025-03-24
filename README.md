@@ -1,9 +1,6 @@
 # LOGIC SOLVER
 This is a logic expression solver.
 
-## TODO:
-- [ ] [Operator Precedence](http://logic.stanford.edu/intrologic/dictionary/operator_precedence.html)
-
 # THEORY
 ## POWER SET - SIMPLIFICATION
 The expression `(p ∧ q) ∨ (r ∧ (p ∨ q))` is at it's simplest.
@@ -42,6 +39,7 @@ But, it still has the property of not having a CONTRADICTION.
 - [x] Dommination Law
 - [x] Identity Law
 - [x] Involution Law (`! ! x` is equivalent to `x`)
+- [x] [Operator Precedence](http://logic.stanford.edu/intrologic/dictionary/operator_precedence.html)
 - [ ] Distribution Law
 - [ ] DeMorgan Law
 
