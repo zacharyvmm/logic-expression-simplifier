@@ -51,14 +51,24 @@ But, it still has the property of not having a CONTRADICTION.
 
 # TESTS
 ## FAILING EXPRESSION
-- `( p & p ) & ( p | p )`
 - `( ( p > q ) & ( q > r ) ) > ( p > r )`
 - `( p & ( p > q ) ) > q`
 - `( p > ( q & r ) ) > ( ( p > q ) & ( p > r ) )`
+- `p > ( q ~ p )`
+- `( ( p | q ) > r ) > ( ( p > r ) & ( q > r ) )`
+- `( ( p > r ) & ( q > r ) & ( p | q ) ) > r`
+- `( ( ! p & q ) | p ) ~ ( ( p | q ) & ! p ) ~ p`
 ## WORKING EXPRESSIONS
+- `p & q` ≡ `p & q`
 - `p & p` ≡ `p`
 - `( p & ( q | r ) ) | p` ≡ `p`
 - `( p & q | r ) | p` ≡ `p`
 - `( ( p | q ) & p ) > p` ≡ `T` 
 - `( ( p & q ) | p ) ~ ( ( p | q ) & p ) ~ p` ≡ `p`
 - `p > ( p > p )` ≡ `T`
+- `( p & p ) & ( p | p )` ≡ `p`
+- `! ! ! p` ≡ `! p`
+- `! p` ≡ `! p`
+- `! ! p` ≡ `p`
+- `! ! ! ! p` ≡ `p`
+- `p & ! ( p | ! q )` ≡ `F`

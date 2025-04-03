@@ -17,11 +17,11 @@ void display_treeprint(Node* root, int level){
 	char* types[] = {"VAR\0", "NOT\0", "AND\0", "OR\0", "THEN\0", "BTHEN\0", "TRUE\0", "FALSE\0"};
 
 	if (root->value != '\0')
-		//printf("%d(%c)\n", root->type, root->value);
-		printf("%d(%c)(%p)\n", root->type, root->value, root);
+		printf("%d(%c)\n", root->type, root->value);
+		//printf("%d(%c)(%p)\n", root->type, root->value, root);
 	else
-		//printf("%d(%s)\n", root->type, types[root->type]);
-		printf("%d(%s)(%p)\n", root->type, types[root->type], root);
+		printf("%d(%s)\n", root->type, types[root->type]);
+		//printf("%d(%s)(%p)\n", root->type, types[root->type], root);
 	display_treeprint(root->left, level+1);
 	display_treeprint(root->right, level+1);
 }

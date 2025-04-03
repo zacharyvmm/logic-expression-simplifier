@@ -99,7 +99,7 @@ void add_negation(Node* node){
 }
 
 void tautology(Node* node){
-	printf("type: %d\n", node->type);
+	// printf("type: %d\n", node->type);
 	delete_tree(node->right);
 	delete_tree(node->left);
 
@@ -110,7 +110,7 @@ void tautology(Node* node){
 }
 
 void contradiction(Node* node){
-	printf("type: %d\n", node->type);
+	// printf("type: %d\n", node->type);
 	delete_tree(node->right);
 	delete_tree(node->left);
 
@@ -172,8 +172,8 @@ void replace_parent_with_child(Node* parent, Node* child){
 	assert(parent != NULL);
 	assert(child != NULL);
 
-	printf("parent: %d - %p, child %d - %p\n", parent->type, parent, child->type, child);
-	printf("parent->parent: %d - %p\n", parent->parent->type, parent->parent);
+	// printf("parent: %d - %p, child %d - %p\n", parent->type, parent, child->type, child);
+	// printf("parent->parent: %d - %p\n", parent->parent->type, parent->parent);
 	child->parent = parent->parent;
 
 	if (parent->parent->left == parent)
@@ -226,7 +226,7 @@ void reset_tree(){
 //
 // That or I need to make a function that check if theirs an adjacent OR or AND that has that value
 bool compare_trees(Node* a, Node* b){
-	printf("compare_trees > %d -> %d:%d\n", a->parent->type, a->type, b->type);
+	// printf("compare_trees > %d -> %d:%d\n", a->parent->type, a->type, b->type);
 	assert(a != b);
 
 	if (a->type == b->type){
@@ -250,11 +250,11 @@ bool compare_trees(Node* a, Node* b){
 		   ){
 			right = compare_trees(a->right, b->right);
 		}
-		printf("Comparison: left: %d and right: %d\n", left, right);
+		// printf("Comparison: left: %d and right: %d\n", left, right);
 		return left && right;
 	}
 
-	printf("NO Comparison\n");
+	// printf("NO Comparison\n");
 	return false;
 }
 
@@ -263,13 +263,13 @@ bool compare_trees(Node* a, Node* b){
  * The assumption is that the type we look to the other side of teh operator or a go up.
  */
 void find_accessible(Node** nodes, int* index, Node* from, Type type){
-	printf("find_accessible\n");
+	// printf("find_accessible\n");
 	// left, right, neg left, neg right
 
 	if (from == NULL)
 		return;
 
-	printf("from->type: %d, type: %d\n", from->type, type);
+	// printf("from->type: %d, type: %d\n", from->type, type);
 
 	if (from->type == NOT){
 		assert(type == AND || type == OR);
@@ -284,9 +284,9 @@ void find_accessible(Node** nodes, int* index, Node* from, Type type){
 	if (from->type != type)
 		return;
 
-	printf("#%d - %p:%d: '%c'\n", *index, from, from->type, from->value);
+	// printf("#%d - %p:%d: '%c'\n", *index, from, from->type, from->value);
 	nodes[(*index)++] = from;
-	printf("#%d - %p:%d: '%c'\n", *index, from, from->type, from->value);
+	// printf("#%d - %p:%d: '%c'\n", *index, from, from->type, from->value);
 
 	find_accessible(nodes, index, from->left, type);
 	find_accessible(nodes, index, from->right, type);
@@ -299,7 +299,7 @@ void find_accessible(Node** nodes, int* index, Node* from, Type type){
 
 int accessible(Node** nodes, Node* from){
 	int index = 0;
-	printf("from: %d\n", from->type);
+	// printf("from: %d\n", from->type);
 
 	nodes[index++] = from->parent;
 	
@@ -327,7 +327,7 @@ bool contains(Node* parent, Node* child){
 
 
 bool collapse_negation(Node* node){
-	printf("Collapse Negation\n");
+	// printf("Collapse Negation\n");
 	assert(node->type == NOT);
 
 	int count = 1;
