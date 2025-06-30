@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 
 
 	char output[150]; 
-	tree_to_string(root, &output, 150);
+	tree_to_string(root, output, 150);
 
 	printf("\n\n≡ %s\n", output);
 

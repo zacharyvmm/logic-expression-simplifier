@@ -403,13 +403,13 @@ void create_tree_to_string(Node* root, char* buffer, int buffer_size) {
 		case OR:
 		case THEN:
 		case BTHEN:
-			create_tree_to_string(root->left, &left_buffer, buffer_size);
-			create_tree_to_string(root->right, &right_buffer, buffer_size);
+			create_tree_to_string(root->left, left_buffer, buffer_size);
+			create_tree_to_string(root->right, right_buffer, buffer_size);
 
 			sprintf(buffer, "( %s %c %s )", left_buffer, operator_chars[root->type - 2], right_buffer);
 			break;
 		case NOT:
-			create_tree_to_string(root->left, &left_buffer, buffer_size);
+			create_tree_to_string(root->left, left_buffer, buffer_size);
 			sprintf(buffer, "! %s", left_buffer);
 			break;
 		case CLOSE:

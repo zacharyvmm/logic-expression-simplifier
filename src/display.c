@@ -67,7 +67,7 @@ void test(char input_string[], char expected_output[]){
 
 	printf("--- START OF EVALUATING EXPECTED OUTPUT ---\n\n");
 	char output[150]; 
-	tree_to_string(root, &output, 150);
+	tree_to_string(root, output, 150);
 
 	printf("output string: %s\n", output);
 	printf("expected output: %s\n", expected_output);
